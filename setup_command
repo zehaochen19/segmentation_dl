@@ -1,0 +1,25 @@
+echo "export LC_ALL=C" >> .bashrc
+wget --content-disposition http://us.download.nvidia.com/tesla/384.66/nvidia-diag-driver-local-repo-ubuntu1604-384.66_1.0-1_amd64.deb
+sudo dpkg -i n
+sudo apt-get update
+sudo apt-get install python python3-dev python-pip python3-pip curl zip unzip zsh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+sudo apt-get install cuda-drivers
+
+
+sudo pip3 install --upgrade pip
+sudo pip3 install  matplotlib pandas pillow jupyter opencv-python cython python3-tk
+
+
+pytorch
+
+curl -O http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtrainval_06-Nov-2007.tar
+curl -O http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCtest_06-Nov-2007.tar
+tar -xvf VOCtrainval_06-Nov-2007.tar
+tar -xvf VOCtest_06-Nov-2007.tar
+rm VOCtrainval_06-Nov-2007.tar
+rm VOCtest_06-Nov-2007.tar
+
+curl -O http://host.robots.ox.ac.uk/pascal/VOC/voc2012/VOCtrainval_11-May-2012.tar
+tar -xvf VOCtrainval_11-May-2012.tar
+rm VOCtrainval_11-May-2012.tar
