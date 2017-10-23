@@ -11,7 +11,6 @@ import pickle
 from subprocess import call
 
 
-
 def evaluate_accuracy(net, val_loader):
     correct = 0
     total = 0
@@ -22,7 +21,7 @@ def evaluate_accuracy(net, val_loader):
         if torch.cuda.is_available():
             img, lbl = img.cuda(), lbl.cuda()
         img = Variable(img, volatile=True)
-        pred = net(img).data.transpose(0, 2, 3, 1)
+        pred = net(img).data
         pred = torch.max(pred, 1)[1]
         correct += torch.sum(pred == lbl)
         total += lbl.numel()
@@ -51,7 +50,8 @@ def train(train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, 
         with open(os.path.join('save', 'acc'), 'rb') as f:
             accuracies = pickle.load(f)
 
-    print(net)
+    print(losses)
+    print(accuracies)
     accuracy = evaluate_accuracy(net, val_loader)
     print('Accuracy before training {}'.format(accuracy))
 
@@ -71,11 +71,12 @@ def train(train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, 
             loss.backward()
             optimizer.step()
 
-            _loss = loss.data
+            _loss = loss.data[0]
             running_loss += _loss
             iter_loss += _loss
 
             iter_count = (iter_count + 1) % 10
+
             if iter_count % 10 == 0:
                 print('\rLoss of last 10 iterations: {}'.format(iter_loss), end='')
                 iter_loss = 0.0
@@ -98,7 +99,7 @@ def train(train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, 
 
 
 def main():
-    train_dataset = VOCDataset(cfg.voc_root, [(2012, 'trainval'), (2007, 'trainval')])
+    train_dataset = VOCDataset(cfg.voc_root, [(2007, 'trainval'), (2012, 'trainval')])
     val_dataset = VOCDataset(cfg.voc_root, [(2007, 'test')])
     if torch.cuda.is_available():
         train_loader = DataLoader(train_dataset, batch_size=24, shuffle=True, num_workers=4, pin_memory=True)
@@ -107,7 +108,7 @@ def main():
         train_loader = DataLoader(train_dataset, batch_size=24, shuffle=True, num_workers=4, pin_memory=False)
         val_loader = DataLoader(val_dataset, batch_size=24, shuffle=False, num_workers=4, pin_memory=False)
 
-    train(train_loader, val_loader, False, 0.0005, 1000, 0.0, 1, True)
+    train(train_loader, val_loader, True, 0.0005, 1000, 0.0, 1, True)
 
 
 if __name__ == '__main__':

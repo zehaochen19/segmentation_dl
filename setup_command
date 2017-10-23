@@ -2,13 +2,13 @@ echo "export LC_ALL=C" >> .bashrc
 wget --content-disposition http://us.download.nvidia.com/tesla/384.66/nvidia-diag-driver-local-repo-ubuntu1604-384.66_1.0-1_amd64.deb
 sudo dpkg -i n
 sudo apt-get update
-sudo apt-get install python python3-dev python-pip python3-pip curl zip unzip zsh
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
+sudo apt-get install python python3-dev python-pip python3-pip curl zip unzip
+
 sudo apt-get install cuda-drivers
 
 
 sudo pip3 install --upgrade pip
-sudo pip3 install  matplotlib pandas pillow jupyter opencv-python cython python3-tk
+sudo pip3 install  matplotlib pandas pillow jupyter
 
 
 pytorch

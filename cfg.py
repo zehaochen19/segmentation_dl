@@ -1,9 +1,6 @@
 import os
-import mxnet as mx
 
 home = os.path.expanduser('~')
-
-ctx = mx.gpu()
 
 size = 320
 mean = [0.485, 0.456, 0.406]

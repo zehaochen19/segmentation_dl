@@ -1,7 +1,3 @@
-import mxnet as mx
-import mxnet.ndarray as nd
-import mxnet.gluon as gluon
-
 import cfg
 import torch
 import torch.nn as nn
@@ -51,13 +47,12 @@ class FCN(nn.Module):
 
 
 def fcn_test():
-    x = torch.randn(1,3,288,288)
+    x = torch.randn(1, 3, 288, 288)
     x = Variable(x)
     net = FCN()
     print(net)
     y = net(x)
     print(y.size())
-
 
 
 if __name__ == '__main__':
