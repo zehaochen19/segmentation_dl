@@ -41,24 +41,28 @@ def train(train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, 
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, 50, gamma=0.7)
+
+    if not os.path.exists('save'):
+        call(['mkdir', 'save'])
 
     if load_checkpoint:
         net.load_state_dict(torch.load(os.path.join('save', 'weights')))
         optimizer.load_state_dict(torch.load(os.path.join('save', 'optimizer')))
+
         with open(os.path.join('save', 'losses'), 'rb') as f:
             losses = pickle.load(f)
         with open(os.path.join('save', 'acc'), 'rb') as f:
             accuracies = pickle.load(f)
 
-    print(losses)
-    print(accuracies)
     accuracy = evaluate_accuracy(net, val_loader)
     print('Accuracy before training {}'.format(accuracy))
-
+    call(['nvidia-smi'])
     print('Start training')
     iter_loss = 0.0
     iter_count = 0
     for epoch in range(len(losses), num_epochs):
+        scheduler.step()
         running_loss = 0.0
         for img, lbl in train_loader:
             if torch.cuda.is_available():
@@ -102,13 +106,13 @@ def main():
     train_dataset = VOCDataset(cfg.voc_root, [(2007, 'trainval'), (2012, 'trainval')])
     val_dataset = VOCDataset(cfg.voc_root, [(2007, 'test')])
     if torch.cuda.is_available():
-        train_loader = DataLoader(train_dataset, batch_size=24, shuffle=True, num_workers=4, pin_memory=True)
-        val_loader = DataLoader(val_dataset, batch_size=24, shuffle=False, num_workers=4, pin_memory=False)
+        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=True)
+        val_loader = DataLoader(val_dataset, batch_size=24, shuffle=False, pin_memory=False)
     else:
-        train_loader = DataLoader(train_dataset, batch_size=24, shuffle=True, num_workers=4, pin_memory=False)
-        val_loader = DataLoader(val_dataset, batch_size=24, shuffle=False, num_workers=4, pin_memory=False)
+        train_loader = DataLoader(train_dataset, batch_size=24, shuffle=True, pin_memory=False)
+        val_loader = DataLoader(val_dataset, batch_size=24, shuffle=False, pin_memory=False)
 
-    train(train_loader, val_loader, True, 0.0005, 1000, 0.0, 1, True)
+    train(train_loader, val_loader, False, 0.001, 1000, 0.0, 1, True)
 
 
 if __name__ == '__main__':
