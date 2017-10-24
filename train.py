@@ -2,6 +2,7 @@ import torch
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from torch import optim, nn
+from torch.optim import lr_scheduler
 
 from voc_dataset import VOCDataset
 from fcn import FCN
@@ -41,19 +42,24 @@ def train(train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, 
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, 50, gamma=0.7)
+    scheduler = lr_scheduler.StepLR(optimizer, 50, gamma=0.7)
 
     if not os.path.exists('save'):
         call(['mkdir', 'save'])
 
     if load_checkpoint:
-        net.load_state_dict(torch.load(os.path.join('save', 'weights')))
-        optimizer.load_state_dict(torch.load(os.path.join('save', 'optimizer')))
+        save_files = set(os.listdir('save'))
+        if {'weights', 'optimizer', 'losses', 'acc'} < save_files:
+            net.load_state_dict(torch.load(os.path.join('save', 'weights')))
+            optimizer.load_state_dict(torch.load(os.path.join('save', 'optimizer')))
 
-        with open(os.path.join('save', 'losses'), 'rb') as f:
-            losses = pickle.load(f)
-        with open(os.path.join('save', 'acc'), 'rb') as f:
-            accuracies = pickle.load(f)
+            with open(os.path.join('save', 'losses'), 'rb') as f:
+                losses = pickle.load(f)
+            with open(os.path.join('save', 'acc'), 'rb') as f:
+                accuracies = pickle.load(f)
+        else:
+            print('Checkpoint files don\'t exist.')
+            print('Skip loading checkpoint')
 
     accuracy = evaluate_accuracy(net, val_loader)
     print('Accuracy before training {}'.format(accuracy))
