@@ -4,10 +4,14 @@ from torchvision import transforms
 import os
 from PIL import Image
 import cfg
-import random
+import augment
+from matplotlib import pyplot as plt
 import numpy as np
 
-img_trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize(cfg.mean, cfg.std)])
+img_trans = transforms.Compose(
+    [transforms.ToTensor(), transforms.Normalize(cfg.mean, cfg.std)])
+
+to_pil = transforms.ToPILImage()
 
 
 def lbl_trans(label):
@@ -17,10 +21,11 @@ def lbl_trans(label):
 
 
 class VOCDataset(Dataset):
-    def __init__(self, root, split):
+    def __init__(self, root, split, transform=augment.basic_trans):
         super(VOCDataset, self).__init__()
         self.root = root
         self.split = split
+        self.transform = transform
 
         self._img_path = os.path.join('{}', 'JPEGImages', '{}.jpg')
         self._label_path = os.path.join('{}', 'SegmentationClass', '{}.png')
@@ -39,23 +44,29 @@ class VOCDataset(Dataset):
         label_path = self._label_path.format(*self.ids[idx])
         label = Image.open(label_path)
 
-        img, label = img.resize((cfg.size, cfg.size)), label.resize((cfg.size, cfg.size))
-        if random.random() < 0.5:
-            img = img.transpose(Image.FLIP_LEFT_RIGHT)
-            label = label.transpose(Image.FLIP_LEFT_RIGHT)
+        fig = plt.figure()
+        fig.add_subplot(2, 2, 1)
+        plt.imshow(img)
+        fig.add_subplot(2, 2, 2)
+        plt.imshow(label)
 
-        img = img_trans(img)
+        img, label = self.transform(img, label)
 
-        label = np.array(label).astype(np.uint8)
-        label = lbl_trans(label)
+        img_, label_ = to_pil(img), Image.fromarray(label.numpy().astype(np.uint8))
 
+        fig.add_subplot(2, 2, 3)
+        plt.imshow(img_)
+        fig.add_subplot(2, 2, 4)
+        plt.imshow(label_)
+        plt.show()
+        print(img.size(), label.size())
         return img, label
 
 
 def voc_test():
-    dataset = VOCDataset(cfg.voc_root, [(2007, 'test')])
-    print(len(dataset))
-    dataloader = DataLoader(dataset, 4, True)
+    dataset = VOCDataset(cfg.voc_root, [(2007, 'test')],augment.augmentation)
+
+    dataloader = DataLoader(dataset, 10, True)
 
     for data in dataloader:
         print(data)

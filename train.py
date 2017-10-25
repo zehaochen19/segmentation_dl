@@ -10,25 +10,9 @@ import cfg
 import os
 import pickle
 from subprocess import call
+from eval import evaluate_accuracy
 
 
-def evaluate_accuracy(net, val_loader):
-    correct = 0
-    total = 0
-    if torch.cuda.is_available():
-        net.cuda()
-    net.eval()
-    for img, lbl in val_loader:
-        if torch.cuda.is_available():
-            img, lbl = img.cuda(), lbl.cuda()
-        img = Variable(img, volatile=True)
-        pred = net(img).data
-        pred = torch.max(pred, 1)[1]
-        correct += torch.sum(pred == lbl)
-        total += lbl.numel()
-    net.train()
-
-    return correct / total
 
 
 def train(train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint, dropbox):
