@@ -103,7 +103,7 @@ ENV/
 
 # misc
 .DS_Store
-models/*
+save/*
 .vscode/
 .idea
 

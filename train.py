@@ -49,7 +49,9 @@ def train(train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, 
 
     if load_checkpoint:
         save_files = set(os.listdir('save'))
-        if {'weights', 'optimizer', 'losses', 'acc'} < save_files:
+        print(save_files)
+        if {'weights', 'optimizer', 'losses', 'acc'} <= save_files:
+            print('Loading checkpoint')
             net.load_state_dict(torch.load(os.path.join('save', 'weights')))
             optimizer.load_state_dict(torch.load(os.path.join('save', 'optimizer')))
 
@@ -118,7 +120,7 @@ def main():
         train_loader = DataLoader(train_dataset, batch_size=24, shuffle=True, pin_memory=False)
         val_loader = DataLoader(val_dataset, batch_size=24, shuffle=False, pin_memory=False)
 
-    train(train_loader, val_loader, False, 0.001, 1000, 0.0, 1, True)
+    train(train_loader, val_loader, True, 0.001, 1000, 0.0, 1, True)
 
 
 if __name__ == '__main__':
