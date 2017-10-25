@@ -5,7 +5,6 @@ import os
 from PIL import Image
 import cfg
 import augment
-from matplotlib import pyplot as plt
 import numpy as np
 
 img_trans = transforms.Compose(
@@ -59,7 +58,7 @@ class VOCDataset(Dataset):
         fig.add_subplot(2, 2, 4)
         plt.imshow(label_)
         plt.show()
-        print(img.size(), label.size())
+
         return img, label
 
 

@@ -3,7 +3,7 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from torch import optim, nn
 from torch.optim import lr_scheduler
-
+import augment
 from voc_dataset import VOCDataset
 from fcn import FCN
 import cfg
@@ -11,8 +11,6 @@ import os
 import pickle
 from subprocess import call
 from eval import evaluate_accuracy
-
-
 
 
 def train(train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint, dropbox):
@@ -95,8 +93,8 @@ def train(train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, 
 
 
 def main():
-    train_dataset = VOCDataset(cfg.voc_root, [(2007, 'trainval'), (2012, 'trainval')])
-    val_dataset = VOCDataset(cfg.voc_root, [(2007, 'test')])
+    train_dataset = VOCDataset(cfg.voc_root, [(2007, 'trainval'), (2012, 'trainval')], transform=augment.augmentation)
+    val_dataset = VOCDataset(cfg.voc_root, [(2007, 'test')], transform=augment.basic_trans)
     if torch.cuda.is_available():
         train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=True)
         val_loader = DataLoader(val_dataset, batch_size=24, shuffle=False, pin_memory=False)
