@@ -17,15 +17,15 @@ def evaluate_accuracy(net, val_loader):
         if torch.cuda.is_available():
             img, lbl = img.cuda(), lbl.cuda()
         img = Variable(img, volatile=True)
-        lbl_mask = lbl != 0
         pred = net(img).data
         pred = torch.max(pred, 1)[1]
-        correct += torch.sum(pred[lbl_mask] == lbl[lbl_mask])
-        total += torch.sum(lbl_mask)
-        print(correct/total)
+        correct += torch.sum(pred == lbl)
+        total += lbl.numel()
+        print(correct / total)
     net.train()
 
     return correct / total
+
 
 if __name__ == '__main__':
     val_dataset = VOCDataset(cfg.voc_root, [(2007, 'test')])
@@ -33,5 +33,5 @@ if __name__ == '__main__':
     net = FCN()
     net.load_state_dict(torch.load(os.path.join('save', 'weights'), map_location=lambda storage, loc: storage))
     net.eval()
-    acc = evaluate_accuracy(net,val_loader)
+    acc = evaluate_accuracy(net, val_loader)
     print(acc)

@@ -24,7 +24,7 @@ class RandomResizedCrop:
     def get_params(img):
         for attempt in range(10):
             area = img.size[0] * img.size[1]
-            target_area = random.uniform(0.15, 1.0) * area
+            target_area = random.uniform(0.2, 1.0) * area
             aspect_ratio = random.uniform(3. / 4, 4. / 3)
 
             w = int(round(math.sqrt(target_area * aspect_ratio)))
