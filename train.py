@@ -15,6 +15,7 @@ from eval import evaluate_accuracy
 
 def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint, dropbox):
     losses = []
+    last_epoch = len(losses) - 1
     accuracies = []
 
     if torch.cuda.is_available():
@@ -23,20 +24,17 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    scheduler = lr_scheduler.StepLR(optimizer, 50, gamma=0.7)
+    scheduler = lr_scheduler.StepLR(optimizer, 50, gamma=0.7, last_epoch=last_epoch)
 
     if not os.path.exists('save'):
         call(['mkdir', 'save'])
 
     if load_checkpoint:
         save_files = set(os.listdir('save'))
-        print(save_files)
         if {'weights', 'optimizer', 'losses', 'acc'} <= save_files:
             print('Loading checkpoint')
             net.load_state_dict(torch.load(os.path.join('save', 'weights')))
             optimizer.load_state_dict(torch.load(os.path.join('save', 'optimizer')))
-            with open(os.path.join('save', 'scheduler'), 'rb') as f:
-                scheduler = pickle.load(f)
             with open(os.path.join('save', 'losses'), 'rb') as f:
                 losses = pickle.load(f)
             with open(os.path.join('save', 'acc'), 'rb') as f:
@@ -51,7 +49,7 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
     print('Start training')
     iter_loss = 0.0
     iter_count = 0
-    for epoch in range(len(losses), num_epochs):
+    for epoch in range(last_epoch + 1, num_epochs):
         scheduler.step()
         running_loss = 0.0
         for img, lbl in train_loader:
@@ -87,8 +85,7 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
                 pickle.dump(losses, f)
             with open(os.path.join('save', 'acc'), 'wb') as f:
                 pickle.dump(accuracies, f)
-            with open(os.path.join('save', 'scheduler'), 'wb') as f:
-                pickle.dump(scheduler, f)
+
             if dropbox:
                 call(['cp', '-r', './save', os.path.join(cfg.home, 'Dropbox')])
     print('Finish training')
@@ -98,7 +95,7 @@ def main():
     train_dataset = VOCDataset(cfg.voc_root, (2012, 'trainval'), transform=augment.augmentation)
     val_dataset = VOCDataset(cfg.voc_root, (2007, 'test'), transform=augment.basic_trans)
     if torch.cuda.is_available():
-        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, pin_memory=True)
         val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=False)
     else:
         train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=False)

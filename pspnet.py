@@ -32,7 +32,7 @@ class PyramidPoolingModule(nn.Module):
 class PSPNet(nn.Module):
     def __init__(self):
         super(PSPNet, self).__init__()
-        resnet = models.resnet101(pretrained=False)
+        resnet = models.resnet50(pretrained=True)
         self.base0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool)
         self.base1, self.base2, self.base3, self.base4 = resnet.layer1, resnet.layer2, resnet.layer3, resnet.layer4
 
@@ -52,10 +52,10 @@ class PSPNet(nn.Module):
         self.auxiliary = nn.Conv2d(1024, cfg.n_class, kernel_size=1)
 
         self.prediction_layer = nn.Sequential(
-            nn.Conv2d(4096, 1024, kernel_size=3, padding=1),
-            nn.BatchNorm2d(1024),
+            nn.Conv2d(4096, 512, kernel_size=3, padding=1),
+            nn.BatchNorm2d(512),
             nn.ReLU(inplace=True),
-            nn.Conv2d(1024, cfg.n_class, kernel_size=1)
+            nn.Conv2d(512, cfg.n_class, kernel_size=1)
         )
 
     def forward(self, x):

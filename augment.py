@@ -39,7 +39,7 @@ class RandomResizedCrop:
                 return i, j, h, w
 
         # Fallback
-        print('fallback')
+
         w = min(img.size[0], img.size[1])
         i = (img.size[1] - w) // 2
         j = (img.size[0] - w) // 2

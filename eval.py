@@ -21,7 +21,7 @@ def evaluate_accuracy(net, val_loader):
         pred = torch.max(pred, 1)[1]
         correct += torch.sum(pred == lbl)
         total += lbl.numel()
-        print(correct / total)
+
     net.train()
 
     return correct / total

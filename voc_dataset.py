@@ -64,8 +64,8 @@ class VOCDataset(Dataset):
 
 
 def voc_test():
-    dataset = VOCDataset(cfg.voc_root, (2007, 'test'), augment.augmentation)
-
+    dataset = VOCDataset(cfg.voc_root, (2012, 'trainval'), augment.augmentation)
+    print(len(dataset))
     dataloader = DataLoader(dataset, 10, True)
 
     for data in dataloader:
