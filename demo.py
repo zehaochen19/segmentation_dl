@@ -1,5 +1,6 @@
 import cfg
 from fcn import FCN
+from pspnet import PSPNet
 import numpy as np
 from matplotlib import pyplot as plt
 from torchvision import transforms
@@ -17,8 +18,9 @@ to_pil = transforms.ToPILImage()
 def demo_main(img_root):
     imgs = os.listdir(img_root)
 
-    net = FCN()
-    net.load_state_dict(torch.load(os.path.join('save', 'weights'), map_location=lambda storage, loc: storage))
+    net = PSPNet()
+    state_dict = torch.load(os.path.join('save', 'weights'), map_location=lambda storage, loc: storage)
+    net.load_state_dict(state_dict=state_dict)
     net.eval()
     for _ in range(10):
         i = random.randrange(0, len(imgs))

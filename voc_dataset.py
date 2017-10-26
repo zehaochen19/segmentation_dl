@@ -5,7 +5,8 @@ import os
 from PIL import Image
 import cfg
 import augment
-
+import numpy as np
+import matplotlib.pyplot as plt
 
 VOC_CLASSES = ('aeroplane', 'bicycle', 'bird', 'boat',
                'bottle', 'bus', 'car', 'cat', 'chair',
@@ -46,20 +47,20 @@ class VOCDataset(Dataset):
         label_path = self._label_path.format(*self.ids[idx])
         label = Image.open(label_path)
 
-        # fig = plt.figure()
-        # fig.add_subplot(2, 2, 1)
-        # plt.imshow(img)
-        # fig.add_subplot(2, 2, 2)
-        # plt.imshow(label)
+        fig = plt.figure()
+        fig.add_subplot(2, 2, 1)
+        plt.imshow(img)
+        fig.add_subplot(2, 2, 2)
+        plt.imshow(label)
 
         img, label = self.transform(img, label)
 
-        # img_, label_ = to_pil(img), Image.fromarray(label.numpy().astype(np.uint8))
-        # fig.add_subplot(2, 2, 3)
-        # plt.imshow(img_)
-        # fig.add_subplot(2, 2, 4)
-        # plt.imshow(label_)
-        # plt.show()
+        img_, label_ = to_pil(img), Image.fromarray(label.numpy().astype(np.uint8))
+        fig.add_subplot(2, 2, 3)
+        plt.imshow(img_)
+        fig.add_subplot(2, 2, 4)
+        plt.imshow(label_)
+        plt.show()
 
         return img, label
 

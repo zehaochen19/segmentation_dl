@@ -22,10 +22,10 @@ class RandomResizedCrop:
 
     @staticmethod
     def get_params(img):
-        for attempt in range(20):
+        for attempt in range(10):
             area = img.size[0] * img.size[1]
             target_area = random.uniform(0.4, 1.0) * area
-            aspect_ratio = random.uniform(3. / 5, 5. / 3)
+            aspect_ratio = random.uniform(3. / 4, 4. / 3)
 
             w = int(round(math.sqrt(target_area * aspect_ratio)))
             h = int(round(math.sqrt(target_area / aspect_ratio)))
@@ -39,11 +39,14 @@ class RandomResizedCrop:
                 return i, j, h, w
 
         # Fallback
-        print('fallback')
-        w = min(img.size[0], img.size[1])
-        i = random.randint(0, img.size[1] - w)
-        j = random.randint(0, img.size[0] - w)
-        return i, j, w, w
+        # print('fallback')
+        if random.random() < 0.5:
+            w = min(img.size[0], img.size[1])
+            i = random.randint(0, img.size[1] - w)
+            j = random.randint(0, img.size[0] - w)
+            return i, j, w, w
+        else:
+            return 0, 0, img.size[1], img.size[0]
 
     def __call__(self, img, lbl):
         i, j, h, w = self.get_params(img)

@@ -5,13 +5,14 @@ from torch import optim, nn
 from torch.optim import lr_scheduler
 import augment
 from voc_dataset import VOCDataset
-from pspnet import PSPNet
+from duchdc import DUCHDC
 import cfg
 import os
 import pickle
 from subprocess import call
 from eval import evaluate_accuracy
 import time
+import math
 
 
 def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint, dropbox):
@@ -44,7 +45,7 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
             print('Skip loading checkpoint')
 
     last_epoch = len(losses) - 1
-    scheduler = lr_scheduler.StepLR(optimizer, 50, gamma=0.7, last_epoch=last_epoch)
+    scheduler = lr_scheduler.LambdaLR(optimizer, lambda epoch: math.pow((1 - epoch / num_epochs), 0.9), last_epoch)
     # accuracy = evaluate_accuracy(net, val_loader)
     # print('Accuracy before training {}'.format(accuracy))
     # print('Start training')
@@ -58,10 +59,10 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
             if torch.cuda.is_available():
                 img, lbl = img.cuda(), lbl.cuda()
             img, lbl = Variable(img, requires_grad=False), Variable(lbl, requires_grad=False)
-            pred, aux = net(img)
-            # pred = net(img)
+            # pred, aux = net(img)
+            pred = net(img)
             optimizer.zero_grad()
-            loss = criterion(pred, lbl) + 0.4 * criterion(aux, lbl)
+            loss = criterion(pred, lbl)
             loss.backward()
             optimizer.step()
 
@@ -99,13 +100,13 @@ def main():
     train_dataset = VOCDataset(cfg.voc_root, (2012, 'trainval'), transform=augment.augmentation)
     val_dataset = VOCDataset(cfg.voc_root, (2007, 'test'), transform=augment.basic_trans)
     if torch.cuda.is_available():
-        train_loader = DataLoader(train_dataset, batch_size=21, shuffle=True, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=12, shuffle=True, pin_memory=True)
     else:
         train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=False)
 
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=False)
-    net = PSPNet()
-    train(net, train_loader, val_loader, True, 0.001, 300, 0.0, 1, True)
+    net = DUCHDC()
+    train(net, train_loader, val_loader, True, 0.0005, 50, 0.0001, 1, True)
 
 
 if __name__ == '__main__':
