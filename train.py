@@ -35,7 +35,8 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
             print('Loading checkpoint')
             net.load_state_dict(torch.load(os.path.join('save', 'weights')))
             optimizer.load_state_dict(torch.load(os.path.join('save', 'optimizer')))
-
+            with open(os.path.join('save', 'scheduler'), 'rb') as f:
+                scheduler = pickle.load(f)
             with open(os.path.join('save', 'losses'), 'rb') as f:
                 losses = pickle.load(f)
             with open(os.path.join('save', 'acc'), 'rb') as f:
@@ -57,10 +58,10 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
             if torch.cuda.is_available():
                 img, lbl = img.cuda(), lbl.cuda()
             img, lbl = Variable(img), Variable(lbl)
-            pred = net(img)
+            aux, pred = net(img)
 
             optimizer.zero_grad()
-            loss = criterion(pred, lbl)
+            loss = 0.4 * criterion(aux, lbl) + criterion(pred, lbl)
             loss.backward()
             optimizer.step()
 
@@ -86,6 +87,8 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
                 pickle.dump(losses, f)
             with open(os.path.join('save', 'acc'), 'wb') as f:
                 pickle.dump(accuracies, f)
+            with open(os.path.join('save', 'scheduler'), 'wb') as f:
+                pickle.dump(scheduler, f)
             if dropbox:
                 call(['cp', '-r', './save', os.path.join(cfg.home, 'Dropbox')])
     print('Finish training')
