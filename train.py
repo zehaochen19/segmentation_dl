@@ -43,8 +43,8 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
             print('Checkpoint files don\'t exist.')
             print('Skip loading checkpoint')
 
-    accuracy = evaluate_accuracy(net, val_loader)
-    print('Accuracy before training {}'.format(accuracy))
+    # accuracy = evaluate_accuracy(net, val_loader)
+    # print('Accuracy before training {}'.format(accuracy))
     call(['nvidia-smi'])
     print('Start training')
     iter_loss = 0.0
@@ -56,10 +56,10 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
             if torch.cuda.is_available():
                 img, lbl = img.cuda(), lbl.cuda()
             img, lbl = Variable(img), Variable(lbl)
-            aux, pred = net(img)
-
+            pred, aux = net(img)
+            # pred = net(img)
             optimizer.zero_grad()
-            loss = 0.4 * criterion(aux, lbl) + criterion(pred, lbl)
+            loss = criterion(pred, lbl)  # + 0.4 * criterion(aux, lbl)
             loss.backward()
             optimizer.step()
 
@@ -79,15 +79,17 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
         accuracies.append(accuracy)
 
         if (epoch + 1) % checkpoint == 0:
+            print('\rSaving checkpoint. Do not shut the program off!', end='')
             torch.save(net.state_dict(), os.path.join('save', 'weights'))
             torch.save(optimizer.state_dict(), os.path.join('save', 'optimizer'))
             with open(os.path.join('save', 'losses'), 'wb') as f:
                 pickle.dump(losses, f)
             with open(os.path.join('save', 'acc'), 'wb') as f:
                 pickle.dump(accuracies, f)
-
             if dropbox:
                 call(['cp', '-r', './save', os.path.join(cfg.home, 'Dropbox')])
+            print('\rFinish saving checkpoint', end='')
+
     print('Finish training')
 
 
@@ -95,12 +97,11 @@ def main():
     train_dataset = VOCDataset(cfg.voc_root, (2012, 'trainval'), transform=augment.augmentation)
     val_dataset = VOCDataset(cfg.voc_root, (2007, 'test'), transform=augment.basic_trans)
     if torch.cuda.is_available():
-        train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, pin_memory=True)
-        val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=False)
+        train_loader = DataLoader(train_dataset, batch_size=14, shuffle=True, pin_memory=True)
     else:
         train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=False)
-        val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=False)
 
+    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=False)
     net = PSPNet()
     train(net, train_loader, val_loader, True, 0.0005, 300, 0.0, 1, True)
 
