@@ -31,10 +31,10 @@ class VOCDataset(Dataset):
         self._img_path = os.path.join('{}', 'JPEGImages', '{}.jpg')
         self._label_path = os.path.join('{}', 'SegmentationClass', '{}.png')
         self.ids = list()
-        for year, subset in split:
-            sub_path = os.path.join(root, 'VOC' + str(year))
-            for line in open(os.path.join(sub_path, 'ImageSets', 'Segmentation', subset + '.txt')):
-                self.ids.append((sub_path, line.strip()))
+        year,subset = split
+        sub_path = os.path.join(root, 'VOC' + str(year))
+        for line in open(os.path.join(sub_path, 'ImageSets', 'Segmentation', subset + '.txt')):
+            self.ids.append((sub_path, line.strip()))
 
     def __len__(self):
         return len(self.ids)
@@ -64,7 +64,7 @@ class VOCDataset(Dataset):
 
 
 def voc_test():
-    dataset = VOCDataset(cfg.voc_root, [(2007, 'test')], augment.augmentation)
+    dataset = VOCDataset(cfg.voc_root, (2007, 'test'), augment.augmentation)
 
     dataloader = DataLoader(dataset, 10, True)
 

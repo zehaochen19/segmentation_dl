@@ -95,8 +95,8 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
 
 
 def main():
-    train_dataset = VOCDataset(cfg.voc_root, [(2007, 'trainval'), (2012, 'trainval')], transform=augment.augmentation)
-    val_dataset = VOCDataset(cfg.voc_root, [(2007, 'test')], transform=augment.basic_trans)
+    train_dataset = VOCDataset(cfg.voc_root, (2012, 'trainval'), transform=augment.augmentation)
+    val_dataset = VOCDataset(cfg.voc_root, (2007, 'test'), transform=augment.basic_trans)
     if torch.cuda.is_available():
         train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=True)
         val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=False)
