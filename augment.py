@@ -10,8 +10,8 @@ import cfg
 def resized_crop(img, lbl, i, j, h, w, size):
     img = img.crop((j, i, j + w, i + h))
     lbl = lbl.crop((j, i, j + w, i + h))
-    img = img.resize((size, size))
-    lbl = lbl.resize((size, size))
+    img = img.resize((size, size), Image.BILINEAR)
+    lbl = lbl.resize((size, size), Image.BILINEAR)
 
     return img, lbl
 
@@ -25,7 +25,7 @@ class RandomResizedCrop:
         for attempt in range(10):
             area = img.size[0] * img.size[1]
             target_area = random.uniform(0.2, 1.0) * area
-            aspect_ratio = random.uniform(3. / 4, 4. / 3)
+            aspect_ratio = random.uniform(3. / 5, 5. / 3)
 
             w = int(round(math.sqrt(target_area * aspect_ratio)))
             h = int(round(math.sqrt(target_area / aspect_ratio)))
@@ -63,7 +63,7 @@ class Resize:
         self.size = size
 
     def __call__(self, img, lbl):
-        return img.resize((self.size, self.size)), lbl.resize((self.size, self.size))
+        return img.resize((self.size, self.size), Image.BILINEAR), lbl.resize((self.size, self.size), Image.BILINEAR)
 
 
 class ToTensor:

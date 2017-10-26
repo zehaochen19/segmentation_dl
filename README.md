@@ -1,2 +1,2 @@
 # segmentation_fcn
-segmentation with FCN deep learning networks for CV
+segmentation with deep learning networks for CV

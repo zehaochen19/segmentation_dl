@@ -5,7 +5,7 @@ from torch import optim, nn
 from torch.optim import lr_scheduler
 import augment
 from voc_dataset import VOCDataset
-from fcn import FCN
+from  pspnet import PSPNet
 import cfg
 import os
 import pickle
@@ -13,8 +13,7 @@ from subprocess import call
 from eval import evaluate_accuracy
 
 
-def train(train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint, dropbox):
-    net = FCN()
+def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint, dropbox):
     losses = []
     accuracies = []
 
@@ -102,7 +101,8 @@ def main():
         train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=False)
         val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=False)
 
-    train(train_loader, val_loader, True, 0.0005, 1000, 0.0, 1, True)
+    net = PSPNet()
+    train(net, train_loader, val_loader, True, 0.0005, 300, 0.0, 1, True)
 
 
 if __name__ == '__main__':

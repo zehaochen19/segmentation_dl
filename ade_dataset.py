@@ -3,9 +3,10 @@ from torchvision import transforms
 from torch.utils.data import Dataset, DataLoader
 import os
 from PIL import Image
+
 import cfg
 import augment
-
+import numpy as np
 
 from matplotlib import pyplot as plt
 
@@ -47,12 +48,12 @@ class ADEDataset(Dataset):
 
         img, lbl = self.transform(img, lbl)
 
-        # img_, label_ = to_pil(img), Image.fromarray(lbl.numpy().astype(np.uint8))
-        # fig.add_subplot(2, 2, 3)
-        # plt.imshow(img_)
-        # fig.add_subplot(2, 2, 4)
-        # plt.imshow(label_)
-        # plt.show()
+        img_, label_ = to_pil(img), Image.fromarray(lbl.numpy().astype(np.uint8))
+        fig.add_subplot(2, 2, 3)
+        plt.imshow(img_)
+        fig.add_subplot(2, 2, 4)
+        plt.imshow(label_)
+        plt.show()
 
         return img, lbl
 

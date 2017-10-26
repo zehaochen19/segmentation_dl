@@ -16,7 +16,7 @@ to_pil = transforms.ToPILImage()
 
 def demo_main(img_root):
     imgs = os.listdir(img_root)
-    print('loading net')
+
     net = FCN()
     net.load_state_dict(torch.load(os.path.join('save', 'weights'), map_location=lambda storage, loc: storage))
     net.eval()
@@ -30,12 +30,10 @@ def demo_main(img_root):
         img_ = normalizer(to_tensor(img_)).unsqueeze(0)
         img_ = Variable(img_, volatile=True)
 
-        print('predicting')
         pred = net(img_).data.squeeze().max(0)[1]
         print(pred.size())
         pred = Image.fromarray(pred.numpy().astype(np.uint8)).resize((w, h))
 
-        print('plotting')
         fig = plt.figure()
         fig.add_subplot(1, 2, 1)
         plt.imshow(img)

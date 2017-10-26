@@ -6,8 +6,11 @@ from PIL import Image
 import cfg
 import augment
 
-img_trans = transforms.Compose(
-    [transforms.ToTensor(), transforms.Normalize(cfg.mean, cfg.std)])
+VOC_CLASSES = ('aeroplane', 'bicycle', 'bird', 'boat',
+               'bottle', 'bus', 'car', 'cat', 'chair',
+               'cow', 'diningtable', 'dog', 'horse',
+               'motorbike', 'person', 'pottedplant',
+               'sheep', 'sofa', 'train', 'tvmonitor')
 
 to_pil = transforms.ToPILImage()
 
