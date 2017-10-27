@@ -17,7 +17,7 @@ class FCN(nn.Module):
             nn.Conv2d(512, 3072, kernel_size=3, padding=1),
             nn.BatchNorm2d(3072, eps=1e-05, momentum=0.1, affine=True),
             nn.ReLU(inplace=True),
-            nn.Conv2d(3072, 3072, kernel_size=1),
+            nn.Conv2d(3072, 3072, kernel_size=3, padding=1),
             nn.BatchNorm2d(3072, eps=1e-05, momentum=0.1, affine=True),
             nn.ReLU(inplace=True),
             nn.Conv2d(3072, cfg.n_class, kernel_size=1)

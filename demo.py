@@ -18,7 +18,7 @@ to_pil = transforms.ToPILImage()
 def demo_main(img_root):
     imgs = os.listdir(img_root)
 
-    net = PSPNet()
+    net = FCN()
     state_dict = torch.load(os.path.join('save', 'weights'), map_location=lambda storage, loc: storage)
     net.load_state_dict(state_dict=state_dict)
     net.eval()
@@ -28,13 +28,13 @@ def demo_main(img_root):
         img = Image.open(img)
         w, h = img.size
 
-        img_ = img.resize((cfg.size, cfg.size))
+        img_ = img.resize((512, 512), Image.BILINEAR)
         img_ = normalizer(to_tensor(img_)).unsqueeze(0)
         img_ = Variable(img_, volatile=True)
 
         pred = net(img_).data.squeeze().max(0)[1]
         print(pred.size())
-        pred = Image.fromarray(pred.numpy().astype(np.uint8)).resize((w, h))
+        pred = Image.fromarray(pred.numpy().astype(np.uint8)).resize((w, h), Image.BILINEAR)
 
         fig = plt.figure()
         fig.add_subplot(1, 2, 1)

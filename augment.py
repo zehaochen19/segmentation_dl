@@ -22,24 +22,26 @@ class RandomResizedCrop:
 
     @staticmethod
     def get_params(img):
-        for attempt in range(10):
-            area = img.size[0] * img.size[1]
-            target_area = random.uniform(0.4, 1.0) * area
-            aspect_ratio = random.uniform(3. / 4, 4. / 3)
+        # try to crop a random portion of the image with random ratio
+        if random.random() < 0.8:
+            for attempt in range(10):
+                area = img.size[0] * img.size[1]
+                target_area = random.uniform(0.4, 1.0) * area
+                aspect_ratio = random.uniform(3. / 4, 4. / 3)
 
-            w = int(round(math.sqrt(target_area * aspect_ratio)))
-            h = int(round(math.sqrt(target_area / aspect_ratio)))
+                w = int(round(math.sqrt(target_area * aspect_ratio)))
+                h = int(round(math.sqrt(target_area / aspect_ratio)))
 
-            if random.random() < 0.5:
-                w, h = h, w
+                if random.random() < 0.5:
+                    w, h = h, w
 
-            if w <= img.size[0] and h <= img.size[1]:
-                i = random.randint(0, img.size[1] - h)
-                j = random.randint(0, img.size[0] - w)
-                return i, j, h, w
+                if w <= img.size[0] and h <= img.size[1]:
+                    i = random.randint(0, img.size[1] - h)
+                    j = random.randint(0, img.size[0] - w)
+                    return i, j, h, w
 
-        # Fallback
-        # print('fallback')
+        # Fallback to random crop or just resize the whole image
+
         if random.random() < 0.5:
             w = min(img.size[0], img.size[1])
             i = random.randint(0, img.size[1] - w)

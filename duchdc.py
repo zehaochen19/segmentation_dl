@@ -6,8 +6,8 @@ from torch.autograd import Variable
 
 
 class DUCHDC(nn.Module):
-    layer3_rates = [1, 2, 5, 9]
-    layer4_rates = [5, 9, 17]
+    layer3_rates = [1, 2, 4, 7]
+    layer4_rates = [7, 11, 16]
 
     def __init__(self):
         super(DUCHDC, self).__init__()
@@ -25,8 +25,8 @@ class DUCHDC(nn.Module):
             if 'conv2' in n or 'downsample.0' in n:
                 m.stride = (1, 1)
         for idx in range(len(self.layer3)):
-            self.layer3[idx].conv2.dilation = (self.layer3_rates[idx % 4], self.layer3_rates[idx % 4])
-            self.layer3[idx].conv2.padding = (self.layer3_rates[idx % 4], self.layer3_rates[idx % 4])
+            self.layer3[idx].conv2.dilation = (self.layer3_rates[idx % 3], self.layer3_rates[idx % 3])
+            self.layer3[idx].conv2.padding = (self.layer3_rates[idx % 3], self.layer3_rates[idx % 3])
         for idx in range(len(self.layer4)):
             self.layer4[idx].conv2.dilation = (self.layer4_rates[idx], self.layer4_rates[idx])
             self.layer4[idx].conv2.padding = (self.layer4_rates[idx], self.layer4_rates[idx])
@@ -53,7 +53,7 @@ class DUCHDC(nn.Module):
 
 
 def duchdc_test():
-    x = Variable(torch.randn(1, 3, 296, 290))
+    x = Variable(torch.randn(1, 3, 320, 320))
     net = DUCHDC()
     y = net(x)
     print(y)

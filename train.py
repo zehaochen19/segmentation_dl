@@ -6,6 +6,7 @@ from torch.optim import lr_scheduler
 import augment
 from voc_dataset import VOCDataset
 from duchdc import DUCHDC
+from fcn import FCN
 import cfg
 import os
 import pickle
@@ -45,7 +46,8 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
             print('Skip loading checkpoint')
 
     last_epoch = len(losses) - 1
-    scheduler = lr_scheduler.LambdaLR(optimizer, lambda epoch: math.pow((1 - epoch / num_epochs), 0.9), last_epoch)
+
+    scheduler = lr_scheduler.LambdaLR(optimizer, lambda e: math.pow((1 - e / num_epochs), 0.9), last_epoch)
     # accuracy = evaluate_accuracy(net, val_loader)
     # print('Accuracy before training {}'.format(accuracy))
     # print('Start training')
@@ -100,13 +102,13 @@ def main():
     train_dataset = VOCDataset(cfg.voc_root, (2012, 'trainval'), transform=augment.augmentation)
     val_dataset = VOCDataset(cfg.voc_root, (2007, 'test'), transform=augment.basic_trans)
     if torch.cuda.is_available():
-        train_loader = DataLoader(train_dataset, batch_size=12, shuffle=True, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=24, shuffle=True, pin_memory=True)
     else:
         train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=False)
 
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=False)
-    net = DUCHDC()
-    train(net, train_loader, val_loader, True, 0.0005, 50, 0.0001, 1, True)
+    net = FCN()
+    train(net, train_loader, val_loader, True, 0.00025, 100, 0.0, 1, True)
 
 
 if __name__ == '__main__':
