@@ -7,7 +7,7 @@ from torch.autograd import Variable
 
 class DUCHDC(nn.Module):
     layer3_rates = [1, 2, 4, 7]
-    layer4_rates = [7, 11, 16]
+    layer4_rates = [4, 7, 11]
 
     def __init__(self):
         super(DUCHDC, self).__init__()

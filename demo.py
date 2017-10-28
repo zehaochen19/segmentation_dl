@@ -33,8 +33,8 @@ def demo_main(img_root):
         img_ = Variable(img_, volatile=True)
 
         pred = net(img_).data.squeeze().max(0)[1]
-        print(pred.size())
-        pred = Image.fromarray(pred.numpy().astype(np.uint8)).resize((w, h), Image.BILINEAR)
+
+        pred = Image.fromarray(pred.numpy().astype(np.uint8)).resize((w, h))
 
         fig = plt.figure()
         fig.add_subplot(1, 2, 1)

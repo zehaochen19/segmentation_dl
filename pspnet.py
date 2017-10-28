@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 
 class PyramidPoolingModule(nn.Module):
-    sizes = [6, 3, 2, 1]
+    sizes = [10, 7, 5, 2]
 
     def __init__(self, in_channels, out_channels):
         super(PyramidPoolingModule, self).__init__()
@@ -32,7 +32,7 @@ class PyramidPoolingModule(nn.Module):
 class PSPNet(nn.Module):
     def __init__(self):
         super(PSPNet, self).__init__()
-        resnet = models.resnet50(pretrained=True)
+        resnet = models.resnet101(pretrained=True)
         self.base0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool)
         self.base1, self.base2, self.base3, self.base4 = resnet.layer1, resnet.layer2, resnet.layer3, resnet.layer4
 
