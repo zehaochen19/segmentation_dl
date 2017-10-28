@@ -1,20 +1,18 @@
-import torch
-from torch.autograd import Variable
-from torch.utils.data import DataLoader
-from torch import optim, nn
-from torch.optim import lr_scheduler
-import augment
-from voc_dataset import VOCDataset
-from duchdc import DUCHDC
-from res_lkm import ResLKM
-from fcn import FCN
-import cfg
 import os
 import pickle
-from subprocess import call
-from eval import evaluate_accuracy
 import time
-import math
+from subprocess import call
+
+import torch
+from torch import optim, nn
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
+
+import augment
+import cfg
+from dataset.voc_dataset import VOCDataset
+from eval import evaluate_accuracy
+from models.res_lkm import ResLKM
 
 
 def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint, dropbox):

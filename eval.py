@@ -1,10 +1,12 @@
+import os
+
 import torch
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-from voc_dataset import VOCDataset
+
 import cfg
-from pspnet import PSPNet
-import os
+from dataset.voc_dataset import VOCDataset
+from models.pspnet import PSPNet
 
 
 def evaluate_accuracy(net, val_loader):

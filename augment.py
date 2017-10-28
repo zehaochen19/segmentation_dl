@@ -144,3 +144,9 @@ cityscapes_trans = Compose([
     ToTensor(),
     Normalize(cfg.mean, cfg.std)
 ])
+
+cityscapes_val = Compose([
+    UnitResize(32),
+    ToTensor(),
+    Normalize(cfg.mean, cfg.std)
+])

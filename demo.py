@@ -1,14 +1,15 @@
-import cfg
-from fcn import FCN
-from pspnet import PSPNet
-import numpy as np
-from matplotlib import pyplot as plt
-from torchvision import transforms
 import os
-import torch
 import random
+
+import numpy as np
+import torch
 from PIL import Image
+from fcn import FCN
+from matplotlib import pyplot as plt
 from torch.autograd import Variable
+from torchvision import transforms
+
+import cfg
 
 normalizer = transforms.Normalize(cfg.mean, cfg.std)
 to_tensor = transforms.ToTensor()
