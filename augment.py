@@ -11,7 +11,7 @@ def resized_crop(img, lbl, i, j, h, w, size):
     img = img.crop((j, i, j + w, i + h))
     lbl = lbl.crop((j, i, j + w, i + h))
     img = img.resize((size, size), Image.BILINEAR)
-    lbl = lbl.resize((size, size), Image.BILINEAR)
+    lbl = lbl.resize((size, size))
 
     return img, lbl
 
@@ -68,7 +68,7 @@ class Resize:
         self.size = size
 
     def __call__(self, img, lbl):
-        return img.resize((self.size, self.size), Image.BILINEAR), lbl.resize((self.size, self.size), Image.BILINEAR)
+        return img.resize((self.size, self.size), Image.BILINEAR), lbl.resize((self.size, self.size))
 
 
 class ToTensor:
@@ -102,6 +102,33 @@ class Compose:
         return img, lbl
 
 
+class RandomCrop:
+    def __init__(self, size, crop=0):
+        self.crop = crop
+        self.size = size
+
+    def __call__(self, img, lbl):
+        crop = self.crop if self.crop != 0 else min(img.size)
+        x = random.randint(0, img.size[0] - crop)
+        y = random.randint(0, img.size[1] - crop)
+        img = img.crop((x, y, x + crop, y + crop))
+        lbl = lbl.crop((x, y, x + crop, y + crop))
+        return img.resize((self.size, self.size), Image.BILINEAR), lbl.resize((self.size, self.size))
+
+
+class UnitResize:
+    def __init__(self, unit):
+        self.unit = unit
+
+    def __call__(self, img, lbl):
+        w, h = img.size
+        if w % self.unit == 0 and h % self.unit == 0:
+            return img, lbl
+        w = int(round(w / self.unit) * self.unit)
+        h = int(round(h / self.unit) * self.unit)
+        return img.resize((w, h), Image.BILINEAR), lbl.resize((w, h))
+
+
 augmentation = Compose([RandomResizedCrop(cfg.size),
                         RandomHorizontalFlip(),
                         ToTensor(),
@@ -110,3 +137,10 @@ augmentation = Compose([RandomResizedCrop(cfg.size),
 basic_trans = Compose([Resize(cfg.size),
                        ToTensor(),
                        Normalize(cfg.mean, cfg.std)])
+
+cityscapes_trans = Compose([
+    RandomCrop(size=cfg.size, crop=cfg.crop),
+    RandomHorizontalFlip(),
+    ToTensor(),
+    Normalize(cfg.mean, cfg.std)
+])

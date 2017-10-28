@@ -55,8 +55,8 @@ class DUCHDC(nn.Module):
 def duchdc_test():
     x = Variable(torch.randn(1, 3, 320, 320))
     net = DUCHDC()
-    y = net(x)
-    print(y)
+
+    print(net)
 
 
 if __name__ == '__main__':

@@ -6,6 +6,7 @@ from torch.optim import lr_scheduler
 import augment
 from voc_dataset import VOCDataset
 from duchdc import DUCHDC
+from res_lkm import ResLKM
 from fcn import FCN
 import cfg
 import os
@@ -47,7 +48,7 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
 
     last_epoch = len(losses) - 1
 
-    scheduler = lr_scheduler.LambdaLR(optimizer, lambda e: math.pow((1 - e / num_epochs), 0.9), last_epoch)
+    # scheduler = lr_scheduler.LambdaLR(optimizer, lambda e: math.pow((1 - e / num_epochs), 0.9), last_epoch)
     # accuracy = evaluate_accuracy(net, val_loader)
     # print('Accuracy before training {}'.format(accuracy))
     # print('Start training')
@@ -55,7 +56,7 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
     iter_count = 0
     for epoch in range(last_epoch + 1, num_epochs):
         t0 = time.time()
-        scheduler.step()
+        # scheduler.step()
         running_loss = 0.0
         for img, lbl in train_loader:
             if torch.cuda.is_available():
@@ -102,12 +103,12 @@ def main():
     train_dataset = VOCDataset(cfg.voc_root, (2012, 'trainval'), transform=augment.augmentation)
     val_dataset = VOCDataset(cfg.voc_root, (2007, 'test'), transform=augment.basic_trans)
     if torch.cuda.is_available():
-        train_loader = DataLoader(train_dataset, batch_size=24, shuffle=True, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=20, shuffle=True, pin_memory=True)
     else:
         train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=False)
 
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=False)
-    net = FCN()
+    net = ResLKM()
     train(net, train_loader, val_loader, True, 0.00025, 100, 0.0, 1, True)
 
 

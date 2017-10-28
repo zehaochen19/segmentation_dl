@@ -23,17 +23,22 @@ class GlobalConvolutionalNetwork(nn.Module):
         return self.left(x) + self.right(x)
 
 
-def boundary_refine_module(in_channels, out_channels):
-    return nn.Sequential(
-        nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-        nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
-    )
+class BoundaryRefineModule(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super(BoundaryRefineModule, self).__init__()
+        self.layer = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
+        )
+
+    def forward(self, x):
+        return x + self.layer(x)
 
 
 class ResLKM(nn.Module):
     def __init__(self):
         super(ResLKM, self).__init__()
-        resnet = models.resnet101(pretrained=True)
+        resnet = models.resnet152(pretrained=True)
         self.layer0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool)
         self.layer1 = resnet.layer1
         self.layer2 = resnet.layer2
@@ -45,15 +50,15 @@ class ResLKM(nn.Module):
         self.gcn_16 = GlobalConvolutionalNetwork(1024, cfg.n_class, 7)
         self.gcn_32 = GlobalConvolutionalNetwork(2048, cfg.n_class, 7)
 
-        self.br_1 = boundary_refine_module(cfg.n_class, cfg.n_class)
-        self.br_2 = boundary_refine_module(cfg.n_class, cfg.n_class)
-        self.br_4_1 = boundary_refine_module(cfg.n_class, cfg.n_class)
-        self.br_4_2 = boundary_refine_module(cfg.n_class, cfg.n_class)
-        self.br_8_1 = boundary_refine_module(cfg.n_class, cfg.n_class)
-        self.br_8_2 = boundary_refine_module(cfg.n_class, cfg.n_class)
-        self.br_16_1 = boundary_refine_module(cfg.n_class, cfg.n_class)
-        self.br_16_2 = boundary_refine_module(cfg.n_class, cfg.n_class)
-        self.br_32 = boundary_refine_module(cfg.n_class, cfg.n_class)
+        self.br_1 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
+        self.br_2 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
+        self.br_4_1 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
+        self.br_4_2 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
+        self.br_8_1 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
+        self.br_8_2 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
+        self.br_16_1 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
+        self.br_16_2 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
+        self.br_32 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
 
         self.deconv_2 = nn.ConvTranspose2d(cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
         self.deconv_4 = nn.ConvTranspose2d(cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)

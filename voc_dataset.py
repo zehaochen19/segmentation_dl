@@ -33,7 +33,7 @@ class VOCDataset(Dataset):
         self._img_path = os.path.join('{}', 'JPEGImages', '{}.jpg')
         self._label_path = os.path.join('{}', 'SegmentationClass', '{}.png')
         self.ids = list()
-        year,subset = split
+        year, subset = split
         sub_path = os.path.join(root, 'VOC' + str(year))
         for line in open(os.path.join(sub_path, 'ImageSets', 'Segmentation', subset + '.txt')):
             self.ids.append((sub_path, line.strip()))
@@ -46,7 +46,6 @@ class VOCDataset(Dataset):
         img = Image.open(img_path).convert('RGB')
         label_path = self._label_path.format(*self.ids[idx])
         label = Image.open(label_path)
-
 
         fig = plt.figure()
         fig.add_subplot(2, 2, 1)
