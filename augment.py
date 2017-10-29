@@ -78,7 +78,6 @@ class ToTensor:
     def __call__(self, img, lbl):
         img = self.to_tensor(img)
         lbl = np.array(lbl).astype(np.uint8)
-        lbl[lbl == 255] = 0
         lbl = torch.from_numpy(lbl).long()
 
         return img, lbl

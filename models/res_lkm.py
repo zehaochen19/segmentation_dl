@@ -40,7 +40,7 @@ class BoundaryRefineModule(nn.Module):
 class ResLKM(nn.Module):
     def __init__(self):
         super(ResLKM, self).__init__()
-        resnet = models.resnet152(pretrained=True)
+        resnet = models.resnet101(pretrained=True)
         self.layer0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool)
         self.layer1 = resnet.layer1
         self.layer2 = resnet.layer2

@@ -2,7 +2,6 @@ import os
 import pickle
 import time
 from subprocess import call
-
 import torch
 from torch import optim, nn
 from torch.autograd import Variable
@@ -10,15 +9,16 @@ from torch.utils.data import DataLoader
 
 import augment
 import cfg
-
 from dataset.cityscapes import CityScapes
-from eval import evaluate_miou
+from eval import evaluate_miou, evaluate_accuracy
 from models.res_lkm import ResLKM
+from models.fcn import FCN
+import numpy as np
 
 
 def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint,
           dropbox):
-    records = {'losses': [], 'mious': []}
+    records = {'losses': [], 'accuracies': []}
     if torch.cuda.is_available():
         net.cuda()
     net.train()
@@ -31,7 +31,7 @@ def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, n
 
     if load_checkpoint:
         save_files = set(os.listdir('save'))
-        if {'weights', 'optimizer', 'losses', 'acc'} <= save_files:
+        if {'weights', 'optimizer', 'records'} <= save_files:
             print('Loading checkpoint')
             net.load_state_dict(torch.load(os.path.join('save', 'weights')))
             optimizer.load_state_dict(torch.load(os.path.join('save', 'optimizer')))
@@ -45,23 +45,26 @@ def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, n
     last_epoch = len(records['losses']) - 1
 
     # scheduler = lr_scheduler.LambdaLR(optimizer, lambda e: math.pow((1 - e / num_epochs), 0.9), last_epoch)
-    # accuracy = evaluate_accuracy(net, val_loader)
-    # print('Accuracy before training {}'.format(accuracy))
-    print('Start training')
+    # miou = evaluate_miou(net, val_loader)
+    # print('mIOU before training {}'.format(miou))
+    # print('Start training')
     iter_loss = 0.0
     iter_count = 0
+
     for epoch in range(last_epoch + 1, num_epochs):
         t0 = time.time()
         # scheduler.step()
         running_loss = 0.0
         for img, lbl in train_loader:
+
             if torch.cuda.is_available():
                 img, lbl = img.cuda(), lbl.cuda()
             img, lbl = Variable(img, requires_grad=False), Variable(lbl, requires_grad=False)
-            # pred, aux = net(img)
+
             pred = net(img)
             optimizer.zero_grad()
             loss = criterion(pred, lbl)
+
             loss.backward()
             optimizer.step()
 
@@ -74,11 +77,11 @@ def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, n
 
                 iter_loss = 0.0
         t1 = time.time()
-        miou = evaluate_miou(net, val_loader)
-        print('\rEpoch {} : Loss {:.2f} mIOU {:.4f}% Time {:.2f}min'.format(
-            epoch + 1, running_loss, miou * 100, (t1 - t0) / 60))
+        accuracy = evaluate_accuracy(net, val_loader)
+        print('\rEpoch {} : Loss {:.2f} Accuracy {:.4f}% Time {:.2f}min'.format(
+            epoch + 1, running_loss, accuracy * 100, (t1 - t0) / 60))
         records['losses'].append(running_loss)
-        records['mious'].append(miou)
+        records['accuracies'].append(accuracy)
 
         if (epoch + 1) % checkpoint == 0:
             print('\rSaving checkpoint', end='')
@@ -95,13 +98,13 @@ def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, n
 
 def main():
     train_dataset = CityScapes(cfg.cityscapes_root, 'train', augment.cityscapes_trans)
-    val_dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
+    val_dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_trans)
     if torch.cuda.is_available():
-        train_loader = DataLoader(train_dataset, batch_size=20, shuffle=True, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, pin_memory=True)
     else:
-        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, pin_memory=False)
+        train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, pin_memory=False)
 
-    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=False)
+    val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, pin_memory=False)
     net = ResLKM()
     train(net, 'LKM', train_loader, val_loader, True, 0.0001, 200, 0.0, 1, True)
 

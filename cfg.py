@@ -3,11 +3,11 @@ import os
 home = os.path.expanduser('~')
 
 crop = 800
-size = 448
+size = 384
 mean = [0.485, 0.456, 0.406]
 std = [0.229, 0.224, 0.225]
 
-n_class = 21  # including background
+n_class = 34  # including background
 
 coco_root = os.path.join(home, 'data', 'COCO')
 coco_classes = ['car', 'bus', 'truck']
