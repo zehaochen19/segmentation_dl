@@ -15,7 +15,8 @@ from eval import evaluate_accuracy
 from models.res_lkm import ResLKM
 
 
-def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint, dropbox):
+def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint,
+          dropbox):
     losses = []
 
     accuracies = []
@@ -26,9 +27,9 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=weight_decay)
-
-    if not os.path.exists('save'):
-        call(['mkdir', 'save'])
+    save_root = os.path.join('save', name)
+    if not os.path.exists(save_root):
+        call(['mkdir', '-p', save_root])
 
     if load_checkpoint:
         save_files = set(os.listdir('save'))
@@ -49,7 +50,7 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
     # scheduler = lr_scheduler.LambdaLR(optimizer, lambda e: math.pow((1 - e / num_epochs), 0.9), last_epoch)
     # accuracy = evaluate_accuracy(net, val_loader)
     # print('Accuracy before training {}'.format(accuracy))
-    # print('Start training')
+    print('Start training')
     iter_loss = 0.0
     iter_count = 0
     for epoch in range(last_epoch + 1, num_epochs):
@@ -84,14 +85,14 @@ def train(net, train_loader, val_loader, load_checkpoint, learning_rate, num_epo
 
         if (epoch + 1) % checkpoint == 0:
             print('\rSaving checkpoint', end='')
-            torch.save(net.state_dict(), os.path.join('save', 'weights'))
-            torch.save(optimizer.state_dict(), os.path.join('save', 'optimizer'))
-            with open(os.path.join('save', 'losses'), 'wb') as f:
+            torch.save(net.state_dict(), os.path.join(save_root, 'weights'))
+            torch.save(optimizer.state_dict(), os.path.join(save_root, 'optimizer'))
+            with open(os.path.join(save_root, 'losses'), 'wb') as f:
                 pickle.dump(losses, f)
-            with open(os.path.join('save', 'acc'), 'wb') as f:
+            with open(os.path.join(save_root, 'acc'), 'wb') as f:
                 pickle.dump(accuracies, f)
             if dropbox:
-                call(['cp', '-r', './save', os.path.join(cfg.home, 'Dropbox')])
+                call(['cp', '-r', save_root, os.path.join(cfg.home, 'Dropbox')])
             print('\rFinish saving checkpoint', end='')
 
     print('Finish training')
@@ -107,7 +108,7 @@ def main():
 
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, pin_memory=False)
     net = ResLKM()
-    train(net, train_loader, val_loader, True, 0.00025, 100, 0.0, 1, True)
+    train(net, 'LKM', train_loader, val_loader, True, 0.0001, 200, 0.0, 1, True)
 
 
 if __name__ == '__main__':
