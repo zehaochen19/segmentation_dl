@@ -58,6 +58,7 @@ class CityScapes(Dataset):
 
 def cs_test():
     dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_trans)
+    print(len(dataset))
     loader = DataLoader(dataset, batch_size=12, shuffle=True)
     for data in loader:
         print(data)

@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 
 class PyramidPoolingModule(nn.Module):
-    sizes = [10, 7, 5, 2]
+    sizes = [6, 3, 2, 1]
 
     def __init__(self, in_channels, out_channels):
         super(PyramidPoolingModule, self).__init__()

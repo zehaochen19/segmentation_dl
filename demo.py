@@ -4,11 +4,14 @@ import random
 import numpy as np
 import torch
 from PIL import Image
-from fcn import FCN
+from models.fcn import FCN
 from matplotlib import pyplot as plt
 from torch.autograd import Variable
 from torchvision import transforms
-
+from torch.utils.data import DataLoader
+from dataset.cityscapes import CityScapes
+import augment
+from models.res_lkm import ResLKM
 import cfg
 
 normalizer = transforms.Normalize(cfg.mean, cfg.std)
@@ -19,8 +22,8 @@ to_pil = transforms.ToPILImage()
 def demo_main(img_root):
     imgs = os.listdir(img_root)
 
-    net = FCN()
-    state_dict = torch.load(os.path.join('save', 'weights'), map_location=lambda storage, loc: storage)
+    net = ResLKM()
+    state_dict = torch.load(os.path.join('save', 'LKM', 'weights'), map_location=lambda storage, loc: storage)
     net.load_state_dict(state_dict=state_dict)
     net.eval()
     for _ in range(10):
@@ -45,6 +48,17 @@ def demo_main(img_root):
         plt.show()
 
 
+def demo_cityscapes(net):
+    val_dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
+    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=True, pin_memory=False)
+    for img, lbl in val_loader:
+        if torch.cuda.is_available():
+            img, lbl = img.cuda(), lbl.cuda()
+        img, lbl = Variable(img, volatile=True), Variable(lbl, volatile=True)
+        pred = net(img).data.squeeze().max(0)[1]
+
+
 if __name__ == '__main__':
     img_root = os.path.join(cfg.voc_root, 'VOC2012', 'JPEGImages')
-    demo_main(img_root)
+    city_root = os.path.join(cfg.cityscapes_root, 'leftImg8bit/test/berlin')
+    demo_main(city_root)

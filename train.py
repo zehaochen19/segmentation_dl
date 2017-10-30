@@ -12,7 +12,7 @@ import cfg
 from dataset.cityscapes import CityScapes
 from eval import evaluate_miou, evaluate_accuracy
 from models.res_lkm import ResLKM
-from models.fcn import FCN
+from models.pspnet import PSPNet
 import numpy as np
 
 
@@ -30,12 +30,12 @@ def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, n
         call(['mkdir', '-p', save_root])
 
     if load_checkpoint:
-        save_files = set(os.listdir('save'))
+        save_files = set(os.listdir(save_root))
         if {'weights', 'optimizer', 'records'} <= save_files:
             print('Loading checkpoint')
-            net.load_state_dict(torch.load(os.path.join('save', 'weights')))
-            optimizer.load_state_dict(torch.load(os.path.join('save', 'optimizer')))
-            with open(os.path.join('save', 'records'), 'rb') as f:
+            net.load_state_dict(torch.load(os.path.join(save_root, 'weights')))
+            optimizer.load_state_dict(torch.load(os.path.join(save_root, 'optimizer')))
+            with open(os.path.join(save_root, 'records'), 'rb') as f:
                 records = pickle.load(f)
 
         else:
@@ -48,10 +48,9 @@ def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, n
     # miou = evaluate_miou(net, val_loader)
     # print('mIOU before training {}'.format(miou))
     # print('Start training')
-    iter_loss = 0.0
-    iter_count = 0
 
     for epoch in range(last_epoch + 1, num_epochs):
+        iter_count = 1
         t0 = time.time()
         # scheduler.step()
         running_loss = 0.0
@@ -70,12 +69,9 @@ def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, n
 
             _loss = loss.data[0]
             running_loss += _loss
-            iter_loss += _loss
-            iter_count = (iter_count + 1) % 10
-            if iter_count % 10 == 0:
-                print('\rLoss of last 10 iterations {:.2f}'.format(iter_loss), end='')
+            iter_count += 1
+            print('\rEpoch {} Iter {} Loss {:.4f}'.format(epoch + 1, iter_count, _loss), end='')
 
-                iter_loss = 0.0
         t1 = time.time()
         accuracy = evaluate_accuracy(net, val_loader)
         print('\rEpoch {} : Loss {:.2f} Accuracy {:.4f}% Time {:.2f}min'.format(
@@ -105,8 +101,8 @@ def main():
         train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, pin_memory=False)
 
     val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, pin_memory=False)
-    net = ResLKM()
-    train(net, 'LKM', train_loader, val_loader, True, 0.0001, 200, 0.0, 1, True)
+    net = PSPNet()
+    train(net, 'PSP', train_loader, val_loader, True, 0.0001, 100, 0.0, 1, True)
 
 
 if __name__ == '__main__':
