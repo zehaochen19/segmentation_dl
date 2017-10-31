@@ -64,11 +64,12 @@ class RandomHorizontalFlip:
 
 
 class Resize:
-    def __init__(self, size):
-        self.size = size
+    def __init__(self, w, h):
+        self.w = w
+        self.h = h
 
     def __call__(self, img, lbl):
-        return img.resize((self.size, self.size), Image.BILINEAR), lbl.resize((self.size, self.size))
+        return img.resize((self.w, self.h), Image.BILINEAR), lbl.resize((self.w, self.h))
 
 
 class ToTensor:
@@ -133,7 +134,7 @@ augmentation = Compose([RandomResizedCrop(cfg.size),
                         ToTensor(),
                         Normalize(cfg.mean, cfg.std)])
 
-basic_trans = Compose([Resize(cfg.size),
+basic_trans = Compose([Resize(cfg.size, cfg.size),
                        ToTensor(),
                        Normalize(cfg.mean, cfg.std)])
 
@@ -146,6 +147,12 @@ cityscapes_trans = Compose([
 
 cityscapes_val = Compose([
     UnitResize(32),
+    ToTensor(),
+    Normalize(cfg.mean, cfg.std)
+])
+
+cityscapes_test = Compose([
+    Resize(cfg.size * 2, cfg.size),
     ToTensor(),
     Normalize(cfg.mean, cfg.std)
 ])

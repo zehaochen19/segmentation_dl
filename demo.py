@@ -32,7 +32,8 @@ def demo_main(img_root):
         img = Image.open(img)
         w, h = img.size
 
-        img_ = img.resize((512, 512), Image.BILINEAR)
+        img_ = img.resize((960, 480), Image.BILINEAR)
+
         img_ = normalizer(to_tensor(img_)).unsqueeze(0)
         img_ = Variable(img_, volatile=True)
 
@@ -49,7 +50,7 @@ def demo_main(img_root):
 
 
 def demo_cityscapes(net):
-    val_dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
+    val_dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_test)
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=True, pin_memory=False)
     for img, lbl in val_loader:
         if torch.cuda.is_available():

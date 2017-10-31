@@ -12,7 +12,7 @@ import cfg
 from dataset.cityscapes import CityScapes
 from eval import evaluate_miou, evaluate_accuracy
 from models.res_lkm import ResLKM
-from models.pspnet import PSPNet
+
 import numpy as np
 
 
@@ -96,13 +96,13 @@ def main():
     train_dataset = CityScapes(cfg.cityscapes_root, 'train', augment.cityscapes_trans)
     val_dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_trans)
     if torch.cuda.is_available():
-        train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=7, shuffle=True, pin_memory=True)
     else:
         train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, pin_memory=False)
 
-    val_loader = DataLoader(val_dataset, batch_size=8, shuffle=False, pin_memory=False)
-    net = PSPNet()
-    train(net, 'PSP', train_loader, val_loader, True, 0.0001, 100, 0.0, 1, True)
+    val_loader = DataLoader(val_dataset, batch_size=2, shuffle=False, pin_memory=False)
+    net = ResLKM()
+    train(net, 'LKM', train_loader, val_loader, True, 0.0001, 100, 0.0, 1, True)
 
 
 if __name__ == '__main__':
