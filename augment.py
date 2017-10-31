@@ -16,6 +16,26 @@ def resized_crop(img, lbl, i, j, h, w, size):
     return img, lbl
 
 
+class RandomScale:
+    def __init__(self, min_scale, max_scale):
+        self.min_scale = min_scale
+        self.max_scale = max_scale
+
+    def __call__(self, img, lbl):
+        scale = random.uniform(self.min_scale, self.max_scale)
+        target_area = scale * (img.size[0] * img.size[1])
+        ratio = img.size[0] / img.size[1]
+
+        w = int(round(math.sqrt(target_area * ratio)))
+        h = int(round(math.sqrt(target_area / ratio)))
+
+        img = img.resize((w, h), Image.BILINEAR)
+        print(img.size)
+        lbl = lbl.resize((w, h))
+
+        return img, lbl
+
+
 class RandomResizedCrop:
     def __init__(self, size):
         self.size = size
@@ -109,8 +129,14 @@ class RandomCrop:
 
     def __call__(self, img, lbl):
         crop = self.crop if self.crop != 0 else min(img.size)
-        x = random.randint(0, img.size[0] - crop)
-        y = random.randint(0, img.size[1] - crop)
+        if img.size[0] - crop > 0:
+            x = random.randint(0, img.size[0] - crop)
+        else:
+            x = (img.size[0] - crop) // 2
+        if img.size[1] - crop > 0:
+            y = random.randint(0, img.size[1] - crop)
+        else:
+            y = (img.size[1] - crop) // 2
         img = img.crop((x, y, x + crop, y + crop))
         lbl = lbl.crop((x, y, x + crop, y + crop))
         return img.resize((self.size, self.size), Image.BILINEAR), lbl.resize((self.size, self.size))
@@ -138,20 +164,27 @@ basic_trans = Compose([Resize(cfg.size, cfg.size),
                        ToTensor(),
                        Normalize(cfg.mean, cfg.std)])
 
-cityscapes_trans = Compose([
+cityscapes_train = Compose([
+    RandomScale(0.5, 2),
+    RandomCrop(size=cfg.size, crop=cfg.crop),
+    ToTensor(),
+    Normalize(cfg.mean, cfg.std)
+])
+
+cityscapes_val = Compose([
     RandomCrop(size=cfg.size, crop=cfg.crop),
     RandomHorizontalFlip(),
     ToTensor(),
     Normalize(cfg.mean, cfg.std)
 ])
 
-cityscapes_val = Compose([
+cityscapes_test = Compose([
     UnitResize(32),
     ToTensor(),
     Normalize(cfg.mean, cfg.std)
 ])
 
-cityscapes_test = Compose([
+cityscapes_t = Compose([
     Resize(cfg.size * 2, cfg.size),
     ToTensor(),
     Normalize(cfg.mean, cfg.std)

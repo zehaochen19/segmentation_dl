@@ -5,8 +5,8 @@ import os
 from PIL import Image
 import cfg
 import augment
-# import numpy as np
-# from matplotlib import pyplot as plt
+import numpy as np
+from matplotlib import pyplot as plt
 
 to_pil = transforms.ToPILImage()
 
@@ -37,27 +37,27 @@ class CityScapes(Dataset):
         img = Image.open(img_path)
         lbl = Image.open(lbl_path)
 
-        # fig = plt.figure()
-        # fig.add_subplot(2, 2, 1)
-        # plt.imshow(img)
-        # fig.add_subplot(2, 2, 2)
-        # plt.imshow(lbl)
+        fig = plt.figure()
+        fig.add_subplot(2, 2, 1)
+        plt.imshow(img)
+        fig.add_subplot(2, 2, 2)
+        plt.imshow(lbl)
 
         img, lbl = self.transform(img, lbl)
 
-        # img_, label_ = to_pil(img), Image.fromarray(lbl.numpy().astype(np.uint8))
-        # fig.add_subplot(2, 2, 3)
-        # plt.imshow(img_)
-        #
-        # fig.add_subplot(2, 2, 4)
-        # plt.imshow(label_)
-        # plt.show()
+        img_, label_ = to_pil(img), Image.fromarray(lbl.numpy().astype(np.uint8))
+        fig.add_subplot(2, 2, 3)
+        plt.imshow(img_)
+
+        fig.add_subplot(2, 2, 4)
+        plt.imshow(label_)
+        plt.show()
 
         return img, lbl
 
 
 def cs_test():
-    dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_trans)
+    dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_train)
     print(len(dataset))
     loader = DataLoader(dataset, batch_size=12, shuffle=True)
     for data in loader:
