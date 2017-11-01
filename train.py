@@ -12,6 +12,7 @@ import cfg
 from dataset.cityscapes import CityScapes
 from eval import evaluate_miou, evaluate_accuracy
 from models.deeplab import DeepLab
+import numpy as np
 
 
 def train(net, name, train_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint,
@@ -52,8 +53,8 @@ def train(net, name, train_loader, load_checkpoint, learning_rate, num_epochs, w
         t0 = time.time()
         # scheduler.step()
         running_loss = 0.0
-        for img, lbl in train_loader:
 
+        for img, lbl in train_loader:
             if torch.cuda.is_available():
                 img, lbl = img.cuda(), lbl.cuda()
             img, lbl = Variable(img, requires_grad=False), Variable(lbl, requires_grad=False)
@@ -68,11 +69,11 @@ def train(net, name, train_loader, load_checkpoint, learning_rate, num_epochs, w
             _loss = loss.data[0]
             running_loss += _loss
             iter_count += 1
-            print('\rEpoch {} Iter {} Loss {:.4f}'.format(epoch + 1, iter_count, _loss), end='')
+            print('\rEpoch {} Iter {} Loss {:.4f}'.format(epoch, iter_count, _loss), end='')
 
         t1 = time.time()
         # accuracy = evaluate_accuracy(net, val_loader)
-        print('\rEpoch {} : Loss {:.4f}  Time {:.2f}min'.format(epoch + 1, running_loss, (t1 - t0) / 60))
+        print('\rEpoch {} : Loss {:.4f}  Time {:.2f}min'.format(epoch, running_loss, (t1 - t0) / 60))
         records['losses'].append(running_loss)
         # records['accuracies'].append(accuracy)
 

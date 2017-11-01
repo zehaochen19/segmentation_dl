@@ -5,6 +5,7 @@ import os
 from PIL import Image
 import cfg
 import augment
+
 # import numpy as np
 # from matplotlib import pyplot as plt
 

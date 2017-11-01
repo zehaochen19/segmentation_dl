@@ -7,6 +7,7 @@ from dataset.cityscapes import CityScapes
 import augment
 from models.deeplab import DeepLab
 from models.res_lkm import ResLKM
+import numpy as np
 
 
 def evaluate_accuracy(net, val_loader):
@@ -34,7 +35,7 @@ def evaluate_accuracy(net, val_loader):
 def evaluate_miou(net, loader):
     was_training = net.training
     intersect = [0] * (cfg.n_class - 1)
-    diff = [0] * (cfg.n_class - 1)
+    union = [0] * (cfg.n_class - 1)
     if torch.cuda.is_available():
         net.cuda()
     net.eval()
@@ -45,18 +46,26 @@ def evaluate_miou(net, loader):
         pred = net(img).data
         pred = torch.max(pred, 1)[1]
         for i in range(1, cfg.n_class):
-            intersect[i - 1] += torch.sum((lbl == i) == (pred == i))
-            diff[i - 1] += torch.sum((lbl == i) != (pred == i))
-    iou = [i / (i + d) for (i, d) in zip(intersect, diff)]
+            match = (lbl == i) + (pred == i)
+            it = torch.sum(match == 2)
+            un = torch.sum(match > 0)
+
+            intersect[i - 1] += it
+            union[i - 1] += un
+
+    iou = []
+    for i in range(len(intersect)):
+        if union[i] != 0:
+            iou.append(intersect[i] / union[i])
 
     if was_training:
         net.train()
-    return sum(iou) / cfg.n_class
+    return sum(iou) / (cfg.n_class - 1)
 
 
 def main():
     dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
-    loader = DataLoader(dataset, batch_size=24, shuffle=False)
+    loader = DataLoader(dataset, batch_size=20, shuffle=False)
     net = DeepLab()
     name = 'DeepLab'
 
@@ -68,11 +77,20 @@ def main():
         net.load_state_dict(torch.load(os.path.join(save_root, 'weights'), map_location=lambda storage, loc: storage))
 
     net.eval()
-    accuracy = evaluate_accuracy(net, loader)
-    print('Accuracy : {:.6f}%'.format(accuracy * 100))
     miou = evaluate_miou(net, loader)
     print('mIOU : {:.6f}%'.format(miou * 100))
+    accuracy = evaluate_accuracy(net, loader)
+    print('Accuracy : {:.6f}%'.format(accuracy * 100))
+
+
+def draft():
+    dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
+    loader = DataLoader(dataset, batch_size=20, shuffle=False)
+    lbl_set = set()
+    for img, lbl in loader:
+        lbl_set |= set(np.unique(lbl.numpy()))
+        print(lbl_set)
 
 
 if __name__ == '__main__':
-    main()
+    draft()
