@@ -11,14 +11,12 @@ import augment
 import cfg
 from dataset.cityscapes import CityScapes
 from eval import evaluate_miou, evaluate_accuracy
-from models.res_lkm import ResLKM
-
-import numpy as np
+from models.deeplab import DeepLab
 
 
-def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint,
+def train(net, name, train_loader, load_checkpoint, learning_rate, num_epochs, weight_decay, checkpoint,
           dropbox):
-    records = {'losses': [], 'accuracies': []}
+    records = {'losses': []}
     if torch.cuda.is_available():
         net.cuda()
     net.train()
@@ -73,11 +71,10 @@ def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, n
             print('\rEpoch {} Iter {} Loss {:.4f}'.format(epoch + 1, iter_count, _loss), end='')
 
         t1 = time.time()
-        accuracy = evaluate_accuracy(net, val_loader)
-        print('\rEpoch {} : Loss {:.2f} Accuracy {:.4f}% Time {:.2f}min'.format(
-            epoch + 1, running_loss, accuracy * 100, (t1 - t0) / 60))
+        # accuracy = evaluate_accuracy(net, val_loader)
+        print('\rEpoch {} : Loss {:.4f}  Time {:.2f}min'.format(epoch + 1, running_loss, (t1 - t0) / 60))
         records['losses'].append(running_loss)
-        records['accuracies'].append(accuracy)
+        # records['accuracies'].append(accuracy)
 
         if (epoch + 1) % checkpoint == 0:
             print('\rSaving checkpoint', end='')
@@ -93,16 +90,16 @@ def train(net, name, train_loader, val_loader, load_checkpoint, learning_rate, n
 
 
 def main():
-    train_dataset = CityScapes(cfg.cityscapes_root, 'train', augment.cityscapes_trans)
-    val_dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_trans)
+    train_dataset = CityScapes(cfg.cityscapes_root, 'train', augment.cityscapes_train)
+    #    val_dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
     if torch.cuda.is_available():
-        train_loader = DataLoader(train_dataset, batch_size=7, shuffle=True, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=12, shuffle=True, pin_memory=True)
     else:
-        train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True, pin_memory=False)
+        train_loader = DataLoader(train_dataset, batch_size=10, shuffle=True, pin_memory=False)
 
-    val_loader = DataLoader(val_dataset, batch_size=2, shuffle=False, pin_memory=False)
-    net = ResLKM()
-    train(net, 'LKM', train_loader, val_loader, True, 0.0001, 100, 0.0, 1, True)
+    # val_loader = DataLoader(val_dataset, batch_size=2, shuffle=False, pin_memory=False)
+    net = DeepLab()
+    train(net, 'DeepLab', train_loader, True, 0.0001, 100, 0.0, 1, True)
 
 
 if __name__ == '__main__':

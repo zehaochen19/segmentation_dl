@@ -1,12 +1,12 @@
 import os
-
 import torch
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-
 import cfg
-
-from models.pspnet import PSPNet
+from dataset.cityscapes import CityScapes
+import augment
+from models.deeplab import DeepLab
+from models.res_lkm import ResLKM
 
 
 def evaluate_accuracy(net, val_loader):
@@ -54,23 +54,25 @@ def evaluate_miou(net, loader):
     return sum(iou) / cfg.n_class
 
 
+def main():
+    dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
+    loader = DataLoader(dataset, batch_size=24, shuffle=False)
+    net = DeepLab()
+    name = 'DeepLab'
+
+    save_root = os.path.join('save', name)
+    if torch.cuda.is_available():
+        net.cuda()
+        net.load_state_dict(torch.load(os.path.join(save_root, 'weights')))
+    else:
+        net.load_state_dict(torch.load(os.path.join(save_root, 'weights'), map_location=lambda storage, loc: storage))
+
+    net.eval()
+    accuracy = evaluate_accuracy(net, loader)
+    print('Accuracy : {:.6f}%'.format(accuracy * 100))
+    miou = evaluate_miou(net, loader)
+    print('mIOU : {:.6f}%'.format(miou * 100))
+
+
 if __name__ == '__main__':
-    pass
-    # val_dataset = VOCDataset(cfg.voc_root, (2007, 'test'))
-    # val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-    # net = PSPNet()
-    # if torch.cuda.is_available():
-    #     net.load_state_dict(torch.load(os.path.join('save', 'weights')))
-    # else:
-    #     net.load_state_dict(torch.load(os.path.join('save', 'weights'), map_location=lambda storage, loc: storage))
-    # net.eval()
-    # correct = 0
-    # total = 0
-    # for img, lbl in val_loader:
-    #     img = Variable(img, volatile=True)
-    #     pred = net(img).data
-    #     pred = torch.max(pred, 1)[1]
-    #     correct += torch.sum(pred == lbl)
-    #     total += lbl.numel()
-    # acc = correct / total
-    # print(acc)
+    main()

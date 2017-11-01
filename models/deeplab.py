@@ -26,7 +26,9 @@ class AtrousSpatialPyramidPooling(nn.Module):
         result = [self.bn(self.conv(x))]
         for p in self.pools:
             result.append(p(x))
-        x = F.upsample(self.img_pool(x), x.size()[2:])
+        size = x.size()[2:]
+        x = self.img_pool(x)
+        x = x.expand(x.size()[:2] + size)
         result.append(x)
         result = torch.cat(result, 1)
         return result
@@ -50,12 +52,13 @@ class DeepLab(nn.Module):
             self.layer4[i].conv2.padding = (self.rates[i], self.rates[i])
             self.layer4[i].conv2.stride = (1, 1)
 
-        self.aspp = AtrousSpatialPyramidPooling(2048, 256, [6, 12, 18])
+        self.aspp = AtrousSpatialPyramidPooling(2048, 256, [5, 9, 14])
         self.conv = nn.Conv2d(1280, 256, kernel_size=1)
         self.bn = nn.BatchNorm2d(256)
         self.pred = nn.Conv2d(256, cfg.n_class, kernel_size=1)
 
     def forward(self, x):
+        size = x.size()[2:]
         x = self.layer0(x)
         x = self.layer1(x)
         x = self.layer2(x)
@@ -67,7 +70,7 @@ class DeepLab(nn.Module):
         x = self.bn(x)
         x = self.pred(x)
 
-        return F.upsample_bilinear(x, (cfg.size, cfg.size))
+        return F.upsample(x, size, mode='bilinear')
 
 
 def deeplab_test():
