@@ -2,8 +2,8 @@ import os
 
 home = os.path.expanduser('~')
 
-crop = 1024
-size = 512
+crop = 768
+size = 576
 mean = [0.485, 0.456, 0.406]
 std = [0.229, 0.224, 0.225]
 

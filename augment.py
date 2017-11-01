@@ -23,14 +23,16 @@ class RandomScale:
 
     def __call__(self, img, lbl):
         scale = random.uniform(self.min_scale, self.max_scale)
-        target_area = scale * (img.size[0] * img.size[1])
-        ratio = img.size[0] / img.size[1]
+        # target_area = scale * (img.size[0] * img.size[1])
+        # ratio = img.size[0] / img.size[1]
 
-        w = int(round(math.sqrt(target_area * ratio)))
-        h = int(round(math.sqrt(target_area / ratio)))
+        # w = int(round(math.sqrt(target_area * ratio)))
+        # h = int(round(math.sqrt(target_area / ratio)))
+
+        w = int(round(scale * img.size[0]))
+        h = int(round(scale * img.size[1]))
 
         img = img.resize((w, h), Image.BILINEAR)
-        print(img.size)
         lbl = lbl.resize((w, h))
 
         return img, lbl
@@ -123,23 +125,30 @@ class Compose:
 
 
 class RandomCrop:
-    def __init__(self, size, crop=0):
-        self.crop = crop
-        self.size = size
+    def __init__(self, crop_size, min_scale=1.0, max_scale=1.0):
+        # assert min_scale <= max_scale
+
+        self.crop_size = crop_size
+        self.min_scale = min_scale
+        self.max_scale = max_scale
+        # self.min_scale = min_scale
+        # self.max_scale = max_scale
 
     def __call__(self, img, lbl):
-        crop = self.crop if self.crop != 0 else min(img.size)
-        if img.size[0] - crop > 0:
-            x = random.randint(0, img.size[0] - crop)
-        else:
-            x = (img.size[0] - crop) // 2
-        if img.size[1] - crop > 0:
-            y = random.randint(0, img.size[1] - crop)
-        else:
-            y = (img.size[1] - crop) // 2
+        # factor = np.random.normal(1.0, 0.15)
+        # if factor > 1.0:
+        #     factor = 2.0 - factor
+        # factor = np.clip(factor, a_min=self.min_scale, a_max=self.max_scale)
+        factor = random.uniform(self.min_scale, self.max_scale)
+        crop = int(round(self.crop_size / factor))
+
+        x = random.randint(0, img.size[0] - crop)
+        y = random.randint(0, img.size[1] - crop)
+
         img = img.crop((x, y, x + crop, y + crop))
+        print(img.size)
         lbl = lbl.crop((x, y, x + crop, y + crop))
-        return img.resize((self.size, self.size), Image.BILINEAR), lbl.resize((self.size, self.size))
+        return img, lbl
 
 
 class UnitResize:
@@ -165,14 +174,17 @@ basic_trans = Compose([Resize(cfg.size, cfg.size),
                        Normalize(cfg.mean, cfg.std)])
 
 cityscapes_train = Compose([
-    RandomScale(0.5, 2),
-    RandomCrop(size=cfg.size, crop=cfg.crop),
+    # RandomScale(0.75, 1.25),
+    RandomCrop(crop_size=cfg.crop, min_scale=0.75, max_scale=1.25),
+    Resize(cfg.size, cfg.size),
+    RandomHorizontalFlip(),
     ToTensor(),
     Normalize(cfg.mean, cfg.std)
 ])
 
 cityscapes_val = Compose([
-    RandomCrop(size=cfg.size, crop=cfg.crop),
+    RandomCrop(crop_size=cfg.crop, min_scale=0.75, max_scale=1.25),
+    Resize(cfg.size, cfg.size),
     RandomHorizontalFlip(),
     ToTensor(),
     Normalize(cfg.mean, cfg.std)
