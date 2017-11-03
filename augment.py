@@ -125,20 +125,22 @@ class Compose:
 
 
 class RandomCrop:
-    def __init__(self, crop_size, min_scale=None, max_scale=None):
+    def __init__(self, crop_size=None, scale=None):
         # assert min_scale <= max_scale
 
         self.crop_size = crop_size
-        self.min_scale = min_scale
-        self.max_scale = max_scale
+        self.scale = scale
         # self.min_scale = min_scale
         # self.max_scale = max_scale
 
     def __call__(self, img, lbl):
-        crop = self.crop_size
-        if self.min_scale and self.max_scale:
-            factor = random.uniform(self.min_scale, self.max_scale)
-            crop = int(round(crop / factor))
+        if self.crop_size:
+            crop = self.crop_size
+        else:
+            crop = min(img.size)
+        if self.scale:
+            factor = random.uniform(self.scale, 1.0)
+            crop = int(round(crop * factor))
 
         x = random.randint(0, img.size[0] - crop)
         y = random.randint(0, img.size[1] - crop)
@@ -171,8 +173,7 @@ basic_trans = Compose([Resize(cfg.size, cfg.size),
                        Normalize(cfg.mean, cfg.std)])
 
 cityscapes_train = Compose([
-    # RandomScale(0.75, 1.25),
-    RandomCrop(crop_size=cfg.crop, min_scale=0.75, max_scale=1.25),
+    RandomCrop(crop_size=cfg.crop, scale=0.75),
     Resize(cfg.size, cfg.size),
     RandomHorizontalFlip(),
     ToTensor(),
@@ -180,7 +181,7 @@ cityscapes_train = Compose([
 ])
 
 cityscapes_val = Compose([
-    Resize(640 * 2, 640),
+    Resize(960, 480),
     ToTensor(),
     Normalize(cfg.mean, cfg.std)
 ])

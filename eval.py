@@ -60,14 +60,14 @@ def evaluate_miou(net, loader):
 
     if was_training:
         net.train()
-    return sum(iou) / (cfg.n_class - 1)
+    return sum(iou) / len(iou)
 
 
 def main():
     dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
     loader = DataLoader(dataset, batch_size=20, shuffle=False)
-    net = DeepLab()
-    name = 'DeepLab'
+    net = ResLKM()
+    name = 'LKM'
 
     save_root = os.path.join('save', name)
     if torch.cuda.is_available():
@@ -93,4 +93,4 @@ def draft():
 
 
 if __name__ == '__main__':
-    draft()
+    main()

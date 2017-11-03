@@ -47,10 +47,10 @@ class ResLKM(nn.Module):
         self.layer3 = resnet.layer3
         self.layer4 = resnet.layer4
 
-        self.gcn_4 = GlobalConvolutionalNetwork(256, cfg.n_class, 7)
-        self.gcn_8 = GlobalConvolutionalNetwork(512, cfg.n_class, 7)
-        self.gcn_16 = GlobalConvolutionalNetwork(1024, cfg.n_class, 7)
-        self.gcn_32 = GlobalConvolutionalNetwork(2048, cfg.n_class, 7)
+        self.gcn_4 = GlobalConvolutionalNetwork(256, cfg.n_class, 13)
+        self.gcn_8 = GlobalConvolutionalNetwork(512, cfg.n_class, 13)
+        self.gcn_16 = GlobalConvolutionalNetwork(1024, cfg.n_class, 13)
+        self.gcn_32 = GlobalConvolutionalNetwork(2048, cfg.n_class, 13)
 
         self.br_1 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
         self.br_2 = BoundaryRefineModule(cfg.n_class, cfg.n_class)

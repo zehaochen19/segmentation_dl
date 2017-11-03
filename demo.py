@@ -12,6 +12,7 @@ from torch.utils.data import DataLoader
 from dataset.cityscapes import CityScapes
 import augment
 from models.res_lkm import ResLKM
+from models.deeplab import DeepLab
 import cfg
 
 normalizer = transforms.Normalize(cfg.mean, cfg.std)
@@ -22,8 +23,8 @@ to_pil = transforms.ToPILImage()
 def demo_main(img_root):
     imgs = os.listdir(img_root)
 
-    net = ResLKM()
-    state_dict = torch.load(os.path.join('save', 'LKM', 'weights'), map_location=lambda storage, loc: storage)
+    net = DeepLab()
+    state_dict = torch.load(os.path.join('save', 'DeepLab', 'weights'), map_location=lambda storage, loc: storage)
     net.load_state_dict(state_dict=state_dict)
     net.eval()
     for _ in range(10):
@@ -32,7 +33,7 @@ def demo_main(img_root):
         img = Image.open(img)
         w, h = img.size
 
-        img_ = img.resize((960, 480), Image.BILINEAR)
+        img_ = img.resize((448* 2, 448), Image.BILINEAR)
 
         img_ = normalizer(to_tensor(img_)).unsqueeze(0)
         img_ = Variable(img_, volatile=True)
@@ -42,9 +43,9 @@ def demo_main(img_root):
         pred = Image.fromarray(pred.numpy().astype(np.uint8)).resize((w, h))
 
         fig = plt.figure()
-        fig.add_subplot(1, 2, 1)
+        fig.add_subplot(2, 1, 1)
         plt.imshow(img)
-        fig.add_subplot(1, 2, 2)
+        fig.add_subplot(2, 1, 2)
         plt.imshow(pred)
         plt.show()
 
