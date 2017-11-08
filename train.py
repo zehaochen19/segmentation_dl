@@ -9,7 +9,8 @@ from torch.utils.data import DataLoader
 import augment
 import cfg
 from dataset.cityscapes import CityScapes
-
+import math
+from torch.optim.lr_scheduler import LambdaLR
 from models.res_lkm import ResLKM
 
 
@@ -21,8 +22,7 @@ def train(net, name, train_loader, load_checkpoint, learning_rate,
     net.train()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(
-        net.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer = optim.SGD(net.parameters(), lr=learning_rate, weight_decay=weight_decay, momentum=0.9)
     save_root = os.path.join('save', name)
     if not os.path.exists(save_root):
         call(['mkdir', '-p', save_root])
@@ -43,17 +43,21 @@ def train(net, name, train_loader, load_checkpoint, learning_rate,
 
     last_epoch = len(records['losses']) - 1
 
+    scheduler = LambdaLR(optimizer,
+                         lambda e: math.pow(1 - e / num_epochs, 0.9),
+                         last_epoch=last_epoch)
+
     for epoch in range(last_epoch + 1, num_epochs):
         iter_count = 0
         t0 = time.time()
-        # scheduler.step()
+        scheduler.step()
+
         running_loss = 0.0
 
         for img, lbl in train_loader:
             if torch.cuda.is_available():
                 img, lbl = img.cuda(), lbl.cuda()
-            img, lbl = Variable(img, requires_grad=False), Variable(
-                lbl, requires_grad=False)
+            img, lbl = Variable(img, requires_grad=False), Variable(lbl, requires_grad=False)
 
             pred = net(img)
             optimizer.zero_grad()
@@ -97,13 +101,13 @@ def main():
 
     if torch.cuda.is_available():
         train_loader = DataLoader(
-            train_dataset, batch_size=12, shuffle=True, pin_memory=True)
+            train_dataset, batch_size=9, shuffle=True, pin_memory=True)
     else:
         train_loader = DataLoader(
-            train_dataset, batch_size=12, shuffle=True, pin_memory=False)
+            train_dataset, batch_size=9, shuffle=True, pin_memory=False)
 
     net = ResLKM()
-    train(net, 'LKM', train_loader, True, 0.0001, 100, 0.0, 1, True)
+    train(net, 'LKM', train_loader, True, 0.001, 100, 0.0, 1, True)
 
 
 if __name__ == '__main__':

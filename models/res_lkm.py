@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 from torch.autograd import Variable
-import torch.nn.functional as F
 
 
 class GlobalConvolutionalNetwork(nn.Module):
@@ -11,12 +10,16 @@ class GlobalConvolutionalNetwork(nn.Module):
         super(GlobalConvolutionalNetwork, self).__init__()
         pad = k // 2
         self.left = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=(k, 1), padding=(pad, 0)),
-            nn.Conv2d(out_channels, out_channels, kernel_size=(1, k), padding=(0, pad)),
+            nn.Conv2d(in_channels, out_channels,
+                      kernel_size=(k, 1), padding=(pad, 0)),
+            nn.Conv2d(out_channels, out_channels,
+                      kernel_size=(1, k), padding=(0, pad)),
         )
         self.right = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=(1, k), padding=(0, pad)),
-            nn.Conv2d(out_channels, out_channels, kernel_size=(k, 1), padding=(pad, 0)),
+            nn.Conv2d(in_channels, out_channels,
+                      kernel_size=(1, k), padding=(0, pad)),
+            nn.Conv2d(out_channels, out_channels,
+                      kernel_size=(k, 1), padding=(pad, 0)),
         )
 
     def forward(self, x):
@@ -41,16 +44,17 @@ class ResLKM(nn.Module):
     def __init__(self):
         super(ResLKM, self).__init__()
         resnet = models.resnet101(pretrained=True)
-        self.layer0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool)
+        self.layer0 = nn.Sequential(
+            resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool)
         self.layer1 = resnet.layer1
         self.layer2 = resnet.layer2
         self.layer3 = resnet.layer3
         self.layer4 = resnet.layer4
 
-        self.gcn_4 = GlobalConvolutionalNetwork(256, cfg.n_class, 13)
-        self.gcn_8 = GlobalConvolutionalNetwork(512, cfg.n_class, 13)
-        self.gcn_16 = GlobalConvolutionalNetwork(1024, cfg.n_class, 13)
-        self.gcn_32 = GlobalConvolutionalNetwork(2048, cfg.n_class, 13)
+        self.gcn_4 = GlobalConvolutionalNetwork(256, cfg.n_class, 15)
+        self.gcn_8 = GlobalConvolutionalNetwork(512, cfg.n_class, 15)
+        self.gcn_16 = GlobalConvolutionalNetwork(1024, cfg.n_class, 15)
+        self.gcn_32 = GlobalConvolutionalNetwork(2048, cfg.n_class, 15)
 
         self.br_1 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
         self.br_2 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
@@ -62,11 +66,16 @@ class ResLKM(nn.Module):
         self.br_16_2 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
         self.br_32 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
 
-        self.deconv_2 = nn.ConvTranspose2d(cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
-        self.deconv_4 = nn.ConvTranspose2d(cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
-        self.deconv_8 = nn.ConvTranspose2d(cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
-        self.deconv_16 = nn.ConvTranspose2d(cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
-        self.deconv_32 = nn.ConvTranspose2d(cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
+        self.deconv_2 = nn.ConvTranspose2d(
+            cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
+        self.deconv_4 = nn.ConvTranspose2d(
+            cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
+        self.deconv_8 = nn.ConvTranspose2d(
+            cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
+        self.deconv_16 = nn.ConvTranspose2d(
+            cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
+        self.deconv_32 = nn.ConvTranspose2d(
+            cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
 
     def forward(self, x):
         x = self.layer0(x)  # 1 / 2
