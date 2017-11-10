@@ -1,2 +1,8 @@
-# segmentation_fcn
-segmentation with deep learning networks for CV
+# segmentation_dl
+segmentation with deep learning networks
+
+
+## Supported Networks
+
+* Large Kernel Matters
+* DeepLab (modified)

@@ -5,8 +5,6 @@ from PIL import Image
 import cfg
 import augment
 
-
-#
 # import numpy as np
 # import matplotlib.pyplot as plt
 # to_pil = transforms.ToPILImage()
@@ -20,13 +18,15 @@ class CityScapes(Dataset):
 
         self.img_paths = []
 
-        self._img = os.path.join(
-            root, 'leftImg8bit', split, '{}_leftImg8bit.png')
-        self._lbl = os.path.join(
-            root, 'gtFine', split, '{}_gtFine_labelIds.png')
+        self._img = os.path.join(root, 'leftImg8bit', split,
+                                 '{}_leftImg8bit.png')
+        self._lbl = os.path.join(root, 'gtFine', split,
+                                 '{}_gtFine_labelIds.png')
 
-        cities = [city for city in os.listdir(
-            self.root) if os.path.isdir(os.path.join(self.root, city))]
+        cities = [
+            city for city in os.listdir(self.root)
+            if os.path.isdir(os.path.join(self.root, city))
+        ]
 
         for city in cities:
             for img in os.listdir(os.path.join(self.root, city)):

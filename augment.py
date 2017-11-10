@@ -91,7 +91,8 @@ class Resize:
         self.h = h
 
     def __call__(self, img, lbl):
-        return img.resize((self.w, self.h), Image.BILINEAR), lbl.resize((self.w, self.h))
+        return img.resize((self.w, self.h), Image.BILINEAR), lbl.resize(
+            (self.w, self.h))
 
 
 class ToTensor:
@@ -160,14 +161,17 @@ class UnitResize:
         return img.resize((w, h), Image.BILINEAR), lbl.resize((w, h))
 
 
-augmentation = Compose([RandomResizedCrop(cfg.size),
-                        RandomHorizontalFlip(),
-                        ToTensor(),
-                        Normalize(cfg.mean, cfg.std)])
+augmentation = Compose([
+    RandomResizedCrop(cfg.size),
+    RandomHorizontalFlip(),
+    ToTensor(),
+    Normalize(cfg.mean, cfg.std)
+])
 
-basic_trans = Compose([Resize(cfg.size, cfg.size),
-                       ToTensor(),
-                       Normalize(cfg.mean, cfg.std)])
+basic_trans = Compose(
+    [Resize(cfg.size, cfg.size),
+     ToTensor(),
+     Normalize(cfg.mean, cfg.std)])
 
 cityscapes_train = Compose([
     Resize(cfg.pre_resize_w, cfg.pre_resize_h),
@@ -183,14 +187,11 @@ cityscapes_val = Compose([
     Normalize(cfg.mean, cfg.std)
 ])
 
-cityscapes_test = Compose([
-    UnitResize(32),
-    ToTensor(),
-    Normalize(cfg.mean, cfg.std)
-])
+cityscapes_test = Compose(
+    [UnitResize(32), ToTensor(),
+     Normalize(cfg.mean, cfg.std)])
 
-cityscapes_t = Compose([
-    Resize(cfg.size * 2, cfg.size),
-    ToTensor(),
-    Normalize(cfg.mean, cfg.std)
-])
+cityscapes_t = Compose(
+    [Resize(cfg.size * 2, cfg.size),
+     ToTensor(),
+     Normalize(cfg.mean, cfg.std)])

@@ -4,14 +4,12 @@ import random
 import numpy as np
 import torch
 from PIL import Image
-from models.fcn import FCN
 from matplotlib import pyplot as plt
 from torch.autograd import Variable
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from dataset.cityscapes import CityScapes
 import augment
-from models.res_lkm import ResLKM
 from models.deeplab import DeepLab
 import cfg
 
@@ -24,7 +22,9 @@ def demo_main(img_root):
     imgs = os.listdir(img_root)
 
     net = DeepLab()
-    state_dict = torch.load(os.path.join('save', 'DeepLab', 'weights'), map_location=lambda storage, loc: storage)
+    state_dict = torch.load(
+        os.path.join('save', 'DeepLab', 'weights'),
+        map_location=lambda storage, loc: storage)
     net.load_state_dict(state_dict=state_dict)
     net.eval()
     for _ in range(10):
@@ -33,7 +33,7 @@ def demo_main(img_root):
         img = Image.open(img)
         w, h = img.size
 
-        img_ = img.resize((448* 2, 448), Image.BILINEAR)
+        img_ = img.resize((448 * 2, 448), Image.BILINEAR)
 
         img_ = normalizer(to_tensor(img_)).unsqueeze(0)
         img_ = Variable(img_, volatile=True)
@@ -51,8 +51,10 @@ def demo_main(img_root):
 
 
 def demo_cityscapes(net):
-    val_dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_test)
-    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=True, pin_memory=False)
+    val_dataset = CityScapes(cfg.cityscapes_root, 'val',
+                             augment.cityscapes_test)
+    val_loader = DataLoader(
+        val_dataset, batch_size=1, shuffle=True, pin_memory=False)
     for img, lbl in val_loader:
         if torch.cuda.is_available():
             img, lbl = img.cuda(), lbl.cuda()

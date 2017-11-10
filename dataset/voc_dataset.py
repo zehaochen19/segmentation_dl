@@ -8,11 +8,10 @@ import augment
 import numpy as np
 import matplotlib.pyplot as plt
 
-VOC_CLASSES = ('aeroplane', 'bicycle', 'bird', 'boat',
-               'bottle', 'bus', 'car', 'cat', 'chair',
-               'cow', 'diningtable', 'dog', 'horse',
-               'motorbike', 'person', 'pottedplant',
-               'sheep', 'sofa', 'train', 'tvmonitor')
+VOC_CLASSES = ('aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car',
+               'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse',
+               'motorbike', 'person', 'pottedplant', 'sheep', 'sofa', 'train',
+               'tvmonitor')
 
 to_pil = transforms.ToPILImage()
 
@@ -35,7 +34,9 @@ class VOCDataset(Dataset):
         self.ids = list()
         year, subset = split
         sub_path = os.path.join(root, 'VOC' + str(year))
-        for line in open(os.path.join(sub_path, 'ImageSets', 'Segmentation', subset + '.txt')):
+        for line in open(
+                os.path.join(sub_path, 'ImageSets', 'Segmentation',
+                             subset + '.txt')):
             self.ids.append((sub_path, line.strip()))
 
     def __len__(self):
@@ -55,7 +56,8 @@ class VOCDataset(Dataset):
 
         img, label = self.transform(img, label)
 
-        img_, label_ = to_pil(img), Image.fromarray(label.numpy().astype(np.uint8))
+        img_, label_ = to_pil(img), Image.fromarray(label.numpy().astype(
+            np.uint8))
         fig.add_subplot(2, 2, 3)
         plt.imshow(img_)
 
@@ -67,7 +69,8 @@ class VOCDataset(Dataset):
 
 
 def voc_test():
-    dataset = VOCDataset(cfg.voc_root, (2012, 'trainval'), augment.augmentation)
+    dataset = VOCDataset(cfg.voc_root, (2012, 'trainval'),
+                         augment.augmentation)
     print(len(dataset))
     dataloader = DataLoader(dataset, 10, True)
 

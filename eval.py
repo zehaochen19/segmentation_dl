@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 import cfg
 from dataset.cityscapes import CityScapes
 import augment
-from models.deeplab import DeepLab
+
 from models.res_lkm import ResLKM
 import numpy as np
 
@@ -74,7 +74,10 @@ def main():
         net.cuda()
         net.load_state_dict(torch.load(os.path.join(save_root, 'weights')))
     else:
-        net.load_state_dict(torch.load(os.path.join(save_root, 'weights'), map_location=lambda storage, loc: storage))
+        net.load_state_dict(
+            torch.load(
+                os.path.join(save_root, 'weights'),
+                map_location=lambda storage, loc: storage))
 
     net.eval()
     miou = evaluate_miou(net, loader)

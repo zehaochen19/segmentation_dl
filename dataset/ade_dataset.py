@@ -27,7 +27,8 @@ class ADEDataset(Dataset):
         self.ids = []
 
         self._img = os.path.join(cfg.ade_root, 'images', '{}.jpg')
-        self._lbl = os.path.join(cfg.ade_root, 'annotations_sceneparsing', '{}.png')
+        self._lbl = os.path.join(cfg.ade_root, 'annotations_sceneparsing',
+                                 '{}.png')
 
         anno_path = os.path.join(cfg.ade_root, 'images', split + '.txt')
         for line in open(anno_path):
@@ -37,7 +38,8 @@ class ADEDataset(Dataset):
         return len(self.ids)
 
     def __getitem__(self, idx):
-        img, lbl = self._img.format(self.ids[idx]), self._lbl.format(self.ids[idx])
+        img, lbl = self._img.format(self.ids[idx]), self._lbl.format(
+            self.ids[idx])
         img, lbl = Image.open(img), Image.open(lbl)
 
         fig = plt.figure()
@@ -48,7 +50,8 @@ class ADEDataset(Dataset):
 
         img, lbl = self.transform(img, lbl)
 
-        img_, label_ = to_pil(img), Image.fromarray(lbl.numpy().astype(np.uint8))
+        img_, label_ = to_pil(img), Image.fromarray(lbl.numpy().astype(
+            np.uint8))
         fig.add_subplot(2, 2, 3)
         plt.imshow(img_)
         fig.add_subplot(2, 2, 4)

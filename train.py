@@ -33,7 +33,6 @@ def parse_arg():
         '--dropbox',
         help='copy save files to dropbox',
         dest='dropbox',
-        type=bool,
         action='store_true')
     # learning rate
     parser.add_argument(
@@ -163,7 +162,7 @@ def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
                      os.path.join(cfg.home, 'Dropbox')])
             print('\rFinish saving checkpoint', end='')
 
-    print('Finish training')
+    print('\nFinish training')
 
 
 def main():
@@ -182,7 +181,8 @@ def main():
             batch_size=args.batch_size,
             shuffle=True,
             pin_memory=False)
-
+    with open(args.name + 'hyperparameter', 'wb') as f:
+        pickle.dump(args, f)
     train(args.name, train_loader, True, args.lr, args.num_epoch, args.wd,
           args.checkpoint, args.dropbox)
 
