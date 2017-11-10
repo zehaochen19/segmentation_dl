@@ -178,7 +178,7 @@ cityscapes_train = Compose([
 ])
 
 cityscapes_val = Compose([
-    Resize(960, 480),
+    Resize(cfg.pre_resize_w, cfg.pre_resize_h),
     ToTensor(),
     Normalize(cfg.mean, cfg.std)
 ])

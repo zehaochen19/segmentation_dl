@@ -1,35 +1,31 @@
-import cfg
 import torch
 import torch.nn as nn
 import torchvision.models as models
 from torch.autograd import Variable
-import torch.nn.functional as F
 
 
 class AtrousSpatialPyramidPooling(nn.Module):
     def __init__(self, in_channels, out_channels, config):
         super(AtrousSpatialPyramidPooling, self).__init__()
         # self.out_channels = out_channels
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
+        self.conv = nn.Conv2d(
+            in_channels, out_channels, kernel_size=3, padding=1)
         self.bn = nn.BatchNorm2d(out_channels)
         self.pools = nn.ModuleList()
         for r in config:
-            self.pools.append(nn.Sequential(nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=r, dilation=r),
-                                            nn.BatchNorm2d(out_channels)))
-        self.img_pool = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(in_channels, out_channels, kernel_size=1),
-            nn.BatchNorm2d(out_channels),
-        )
+            self.pools.append(
+                nn.Sequential(
+                    nn.Conv2d(
+                        in_channels,
+                        out_channels,
+                        kernel_size=3,
+                        padding=r,
+                        dilation=r), nn.BatchNorm2d(out_channels)))
 
     def forward(self, x):
         result = [self.bn(self.conv(x))]
         for p in self.pools:
             result.append(p(x))
-        size = x.size()[2:]
-        x = self.img_pool(x)
-        x = x.expand(x.size()[:2] + size)
-        result.append(x)
         result = torch.cat(result, 1)
         return result
 
@@ -37,10 +33,11 @@ class AtrousSpatialPyramidPooling(nn.Module):
 class DeepLab(nn.Module):
     rates = [1, 2, 4]
 
-    def __init__(self):
+    def __init__(self, n_class):
         super(DeepLab, self).__init__()
         resnet = models.resnet101(pretrained=True)
-        self.layer0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool)
+        self.layer0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu,
+                                    resnet.maxpool)
         self.layer1 = resnet.layer1
         self.layer2 = resnet.layer2
         self.layer3 = resnet.layer3
@@ -52,13 +49,14 @@ class DeepLab(nn.Module):
             self.layer4[i].conv2.padding = (self.rates[i], self.rates[i])
             self.layer4[i].conv2.stride = (1, 1)
 
-        self.aspp = AtrousSpatialPyramidPooling(2048, 256, [5, 9, 14])
-        self.conv = nn.Conv2d(1280, 256, kernel_size=1)
-        self.bn = nn.BatchNorm2d(256)
-        self.pred = nn.Conv2d(256, cfg.n_class, kernel_size=1)
+        self.aspp = AtrousSpatialPyramidPooling(2048, 256, [5, 10, 15])
+        self.conv = nn.Conv2d(1024, 512, kernel_size=1)
+        self.bn = nn.BatchNorm2d(512)
+        self.pred = nn.Conv2d(512, n_class, kernel_size=1)
+        self.upsample = nn.ConvTranspose2d(
+            n_class, n_class, kernel_size=32, stride=16, padding=8)
 
     def forward(self, x):
-        size = x.size()[2:]
         x = self.layer0(x)
         x = self.layer1(x)
         x = self.layer2(x)
@@ -70,7 +68,7 @@ class DeepLab(nn.Module):
         x = self.bn(x)
         x = self.pred(x)
 
-        return F.upsample(x, size, mode='bilinear')
+        return self.upsample(x)
 
 
 def deeplab_test():

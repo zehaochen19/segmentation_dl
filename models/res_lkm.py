@@ -41,7 +41,7 @@ class BoundaryRefineModule(nn.Module):
 
 
 class ResLKM(nn.Module):
-    def __init__(self):
+    def __init__(self, n_class):
         super(ResLKM, self).__init__()
         resnet = models.resnet101(pretrained=True)
         self.layer0 = nn.Sequential(
@@ -51,31 +51,31 @@ class ResLKM(nn.Module):
         self.layer3 = resnet.layer3
         self.layer4 = resnet.layer4
 
-        self.gcn_4 = GlobalConvolutionalNetwork(256, cfg.n_class, 15)
-        self.gcn_8 = GlobalConvolutionalNetwork(512, cfg.n_class, 15)
-        self.gcn_16 = GlobalConvolutionalNetwork(1024, cfg.n_class, 15)
-        self.gcn_32 = GlobalConvolutionalNetwork(2048, cfg.n_class, 15)
+        self.gcn_4 = GlobalConvolutionalNetwork(256, n_class, 15)
+        self.gcn_8 = GlobalConvolutionalNetwork(512, n_class, 15)
+        self.gcn_16 = GlobalConvolutionalNetwork(1024, n_class, 15)
+        self.gcn_32 = GlobalConvolutionalNetwork(2048, n_class, 15)
 
-        self.br_1 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
-        self.br_2 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
-        self.br_4_1 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
-        self.br_4_2 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
-        self.br_8_1 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
-        self.br_8_2 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
-        self.br_16_1 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
-        self.br_16_2 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
-        self.br_32 = BoundaryRefineModule(cfg.n_class, cfg.n_class)
+        self.br_1 = BoundaryRefineModule(n_class, n_class)
+        self.br_2 = BoundaryRefineModule(n_class, n_class)
+        self.br_4_1 = BoundaryRefineModule(n_class, n_class)
+        self.br_4_2 = BoundaryRefineModule(n_class, n_class)
+        self.br_8_1 = BoundaryRefineModule(n_class, n_class)
+        self.br_8_2 = BoundaryRefineModule(n_class, n_class)
+        self.br_16_1 = BoundaryRefineModule(n_class, n_class)
+        self.br_16_2 = BoundaryRefineModule(n_class, n_class)
+        self.br_32 = BoundaryRefineModule(n_class, n_class)
 
         self.deconv_2 = nn.ConvTranspose2d(
-            cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
+            n_class, n_class, kernel_size=4, stride=2, padding=1)
         self.deconv_4 = nn.ConvTranspose2d(
-            cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
+            n_class, n_class, kernel_size=4, stride=2, padding=1)
         self.deconv_8 = nn.ConvTranspose2d(
-            cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
+            n_class, n_class, kernel_size=4, stride=2, padding=1)
         self.deconv_16 = nn.ConvTranspose2d(
-            cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
+            n_class, n_class, kernel_size=4, stride=2, padding=1)
         self.deconv_32 = nn.ConvTranspose2d(
-            cfg.n_class, cfg.n_class, kernel_size=4, stride=2, padding=1)
+            n_class, n_class, kernel_size=4, stride=2, padding=1)
 
     def forward(self, x):
         x = self.layer0(x)  # 1 / 2
@@ -104,7 +104,7 @@ class ResLKM(nn.Module):
 
 def gcn_test():
     x = Variable(torch.randn(1, 3, cfg.size, cfg.size))
-    net = ResLKM()
+    net = ResLKM(cfg.n_class)
     y = net(x)
     print(y)
 
