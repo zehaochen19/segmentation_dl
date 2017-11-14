@@ -1,6 +1,5 @@
 import torchvision
 from PIL import Image
-import math
 import random
 import numpy as np
 import torch
@@ -11,70 +10,9 @@ def resized_crop(img, lbl, i, j, h, w, size):
     img = img.crop((j, i, j + w, i + h))
     lbl = lbl.crop((j, i, j + w, i + h))
     img = img.resize((size, size), Image.BILINEAR)
-    lbl = lbl.resize((size, size))
+    lbl = lbl.resize((size, size), Image.NEAREST)
 
     return img, lbl
-
-
-class RandomScale:
-    def __init__(self, min_scale, max_scale):
-        self.min_scale = min_scale
-        self.max_scale = max_scale
-
-    def __call__(self, img, lbl):
-        scale = random.uniform(self.min_scale, self.max_scale)
-        # target_area = scale * (img.size[0] * img.size[1])
-        # ratio = img.size[0] / img.size[1]
-
-        # w = int(round(math.sqrt(target_area * ratio)))
-        # h = int(round(math.sqrt(target_area / ratio)))
-
-        w = int(round(scale * img.size[0]))
-        h = int(round(scale * img.size[1]))
-
-        img = img.resize((w, h), Image.BILINEAR)
-        lbl = lbl.resize((w, h))
-
-        return img, lbl
-
-
-class RandomResizedCrop:
-    def __init__(self, size):
-        self.size = size
-
-    @staticmethod
-    def get_params(img):
-        # try to crop a random portion of the image with random ratio
-        if random.random() < 0.8:
-            for attempt in range(10):
-                area = img.size[0] * img.size[1]
-                target_area = random.uniform(0.4, 1.0) * area
-                aspect_ratio = random.uniform(3. / 4, 4. / 3)
-
-                w = int(round(math.sqrt(target_area * aspect_ratio)))
-                h = int(round(math.sqrt(target_area / aspect_ratio)))
-
-                if random.random() < 0.5:
-                    w, h = h, w
-
-                if w <= img.size[0] and h <= img.size[1]:
-                    i = random.randint(0, img.size[1] - h)
-                    j = random.randint(0, img.size[0] - w)
-                    return i, j, h, w
-
-        # Fallback to random crop or just resize the whole image
-
-        if random.random() < 0.5:
-            w = min(img.size[0], img.size[1])
-            i = random.randint(0, img.size[1] - w)
-            j = random.randint(0, img.size[0] - w)
-            return i, j, w, w
-        else:
-            return 0, 0, img.size[1], img.size[0]
-
-    def __call__(self, img, lbl):
-        i, j, h, w = self.get_params(img)
-        return resized_crop(img, lbl, i, j, h, w, self.size)
 
 
 class RandomHorizontalFlip:
@@ -92,7 +30,24 @@ class Resize:
 
     def __call__(self, img, lbl):
         return img.resize((self.w, self.h), Image.BILINEAR), lbl.resize(
-            (self.w, self.h))
+            (self.w, self.h), Image.NEAREST)
+
+
+class ResizeShort:
+    def __init__(self, size):
+        self.size = size
+
+    def __call__(self, img, lbl):
+        w, h = img.size
+
+        if w < h:
+            new_h = int(round(h / w) * self.size)
+            img = img.resize((self.size, new_h), Image.BILINEAR)
+            lbl = lbl.resize((self.size, new_h), Image.NEAREST)
+        else:
+            new_w = int(round(w / h) * self.size)
+            img = img.resize((new_w, self.size), Image.BILINEAR)
+            lbl = lbl.resize((new_w, self.size), Image.NEAREST)
 
 
 class ToTensor:
@@ -160,18 +115,6 @@ class UnitResize:
         h = int(round(h / self.unit) * self.unit)
         return img.resize((w, h), Image.BILINEAR), lbl.resize((w, h))
 
-
-augmentation = Compose([
-    RandomResizedCrop(cfg.size),
-    RandomHorizontalFlip(),
-    ToTensor(),
-    Normalize(cfg.mean, cfg.std)
-])
-
-basic_trans = Compose(
-    [Resize(cfg.size, cfg.size),
-     ToTensor(),
-     Normalize(cfg.mean, cfg.std)])
 
 cityscapes_train = Compose([
     Resize(cfg.pre_resize_w, cfg.pre_resize_h),

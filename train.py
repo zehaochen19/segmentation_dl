@@ -9,8 +9,8 @@ from torch.utils.data import DataLoader
 import augment
 import cfg
 from dataset.cityscapes import CityScapes
-import math
-from torch.optim.lr_scheduler import LambdaLR
+from eval import evaluate_accuracy
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from models.res_lkm import ResLKM
 from models.deeplab import DeepLab
 import argparse
@@ -27,7 +27,7 @@ def parse_arg():
         help='name of the network',
         dest='name',
         type=str,
-        default='LKM_512_cityscapes')
+        default='DeepLab_512_cityscapes')
     # use dropbox
     parser.add_argument(
         '--dropbox',
@@ -36,7 +36,7 @@ def parse_arg():
         action='store_true')
     # learning rate
     parser.add_argument(
-        '--lr', help='learning rate', dest='lr', type=float, default=0.005)
+        '--lr', help='learning rate', dest='lr', type=float, default=0.0025)
     # weight decay
     parser.add_argument(
         '--weight_decay',
@@ -73,9 +73,9 @@ def parse_arg():
 args = parse_arg()
 
 
-def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
-          weight_decay, checkpoint, dropbox):
-    net = nets[name.split('_' [0])]()
+def train(name, train_loader, val_loader, load_checkpoint, learning_rate,
+          num_epochs, weight_decay, checkpoint, dropbox):
+    net = nets[name.split('_')[0]](cfg.n_class)
     records = {'losses': []}
     if torch.cuda.is_available():
         net.cuda()
@@ -107,15 +107,23 @@ def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
 
     last_epoch = len(records['losses']) - 1
 
-    scheduler = LambdaLR(
-        optimizer,
-        lambda e: math.pow(1 - e / num_epochs, 0.9),
-        last_epoch=last_epoch)
+    scheduler = ReduceLROnPlateau(
+        net.parameters(),
+        mode='min',
+        factor=0.5,
+        patience=5,
+        verbose=True,
+        threshold=1e-3,
+        min_lr=1e-7)
 
     for epoch in range(last_epoch + 1, num_epochs):
         iter_count = 0
         t0 = time.time()
-        scheduler.step()
+        net.eval()
+        acc = evaluate_accuracy(net, val_loader)
+        net.train()
+        print('Before epoch {} : Accuracy {}'.format(epoch, acc))
+        scheduler.step(acc)
 
         running_loss = 0.0
 
@@ -168,6 +176,8 @@ def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
 def main():
     train_dataset = CityScapes(cfg.cityscapes_root, 'train',
                                augment.cityscapes_train)
+    val_dataset = CityScapes(cfg.cityscapes_root, 'val',
+                             augment.cityscapes_val)
 
     if torch.cuda.is_available():
         train_loader = DataLoader(
@@ -175,16 +185,20 @@ def main():
             batch_size=args.batch_size,
             shuffle=True,
             pin_memory=True)
+        val_loader = DataLoader(
+            val_dataset, batch_size=16, shuffle=False, pin_memory=True)
     else:
         train_loader = DataLoader(
             train_dataset,
             batch_size=args.batch_size,
             shuffle=True,
             pin_memory=False)
-    with open(args.name + 'hyperparameter', 'wb') as f:
+        val_loader = DataLoader(
+            val_dataset, batch_size=16, shuffle=False, pin_memory=False)
+    with open(args.name + '_hyperparameter', 'wb') as f:
         pickle.dump(args, f)
-    train(args.name, train_loader, True, args.lr, args.num_epoch, args.wd,
-          args.checkpoint, args.dropbox)
+    train(args.name, train_loader, val_loader, True, args.lr, args.num_epoch,
+          args.wd, args.checkpoint, args.dropbox)
 
 
 if __name__ == '__main__':

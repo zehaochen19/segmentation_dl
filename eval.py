@@ -11,12 +11,9 @@ import numpy as np
 
 
 def evaluate_accuracy(net, val_loader):
-    was_training = net.training
     correct = 0
     total = 0
-    if torch.cuda.is_available():
-        net.cuda()
-    net.eval()
+
     for img, lbl in val_loader:
         if torch.cuda.is_available():
             img, lbl = img.cuda(), lbl.cuda()
@@ -25,9 +22,6 @@ def evaluate_accuracy(net, val_loader):
         pred = torch.max(pred, 1)[1]
         correct += torch.sum(pred == lbl)
         total += lbl.numel()
-
-    if was_training:
-        net.train()
 
     return correct / total
 
@@ -66,8 +60,8 @@ def evaluate_miou(net, loader):
 def main():
     dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
     loader = DataLoader(dataset, batch_size=20, shuffle=False)
-    net = ResLKM()
-    name = 'LKM'
+    net = ResLKM(cfg.n_class)
+    name = 'LKM_512_cityscapes'
 
     save_root = os.path.join('save', name)
     if torch.cuda.is_available():
