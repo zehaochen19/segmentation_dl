@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 import augment
 import cfg
 from dataset.cityscapes import CityScapes
-from eval import evaluate_accuracy
+from evaluation import evaluate_accuracy
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from models.res_lkm import ResLKM
 from models.deeplab import DeepLab
@@ -111,7 +111,7 @@ def train(name, train_loader, val_loader, load_checkpoint, learning_rate,
         net.parameters(),
         mode='min',
         factor=0.5,
-        patience=5,
+        patience=4,
         verbose=True,
         threshold=1e-3,
         min_lr=1e-7)
