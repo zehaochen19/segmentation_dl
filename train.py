@@ -14,8 +14,8 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from models.res_lkm import ResLKM
 from models.deeplab import DeepLab
 import argparse
-
-nets = {'LKM': ResLKM, 'DeepLab': DeepLab}
+import logging
+import datetime
 
 
 def parse_arg():
@@ -36,7 +36,7 @@ def parse_arg():
         action='store_true')
     # learning rate
     parser.add_argument(
-        '--lr', help='learning rate', dest='lr', type=float, default=0.0025)
+        '--lr', help='learning rate', dest='lr', type=float, default=0.005)
     # weight decay
     parser.add_argument(
         '--weight_decay',
@@ -57,7 +57,7 @@ def parse_arg():
         help='number of epoch',
         dest='num_epoch',
         type=int,
-        default=90)
+        default=100)
     # checkpoint
     parser.add_argument(
         '--checkpoint',
@@ -71,6 +71,19 @@ def parse_arg():
 
 
 args = parse_arg()
+
+nets = {'LKM': ResLKM, 'DeepLab': DeepLab}
+if not os.path.exists('log'):
+    call(['mkdir', 'log'])
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(
+            os.path.join('log', '{}_{}.log'.format(args.name,
+                                                   datetime.datetime.now())))
+    ])
 
 
 def train(name, train_loader, val_loader, load_checkpoint, learning_rate,
@@ -94,7 +107,7 @@ def train(name, train_loader, val_loader, load_checkpoint, learning_rate,
     if load_checkpoint:
         save_files = set(os.listdir(save_root))
         if {'weights', 'optimizer', 'records'} <= save_files:
-            print('Loading checkpoint')
+            logging.info('Loading checkpoint')
             net.load_state_dict(torch.load(os.path.join(save_root, 'weights')))
             optimizer.load_state_dict(
                 torch.load(os.path.join(save_root, 'optimizer')))
@@ -102,27 +115,29 @@ def train(name, train_loader, val_loader, load_checkpoint, learning_rate,
                 records = pickle.load(f)
 
         else:
-            print('Checkpoint files don\'t exist.')
-            print('Skip loading checkpoint')
+            logging.info('Checkpoint files don\'t exist.')
+            logging.info('Skip loading checkpoint')
 
     last_epoch = len(records['losses']) - 1
 
     scheduler = ReduceLROnPlateau(
-        net.parameters(),
-        mode='min',
+        optimizer,
+        mode='max',
         factor=0.5,
-        patience=4,
+        patience=5,
         verbose=True,
         threshold=1e-3,
+        threshold_mode='abs',
         min_lr=1e-7)
 
+    iter_loss = 0.0
+    iter_count = 0
     for epoch in range(last_epoch + 1, num_epochs):
-        iter_count = 0
         t0 = time.time()
         net.eval()
         acc = evaluate_accuracy(net, val_loader)
         net.train()
-        print('Before epoch {} : Accuracy {}'.format(epoch, acc))
+        logging.info('Before epoch {} : Accuracy {}'.format(epoch, acc))
         scheduler.step(acc)
 
         running_loss = 0.0
@@ -143,22 +158,24 @@ def train(name, train_loader, val_loader, load_checkpoint, learning_rate,
 
             _loss = loss.data[0]
             running_loss += _loss
+            iter_loss += _loss
+            iter_count = (iter_count + 1) % 20
 
-            print(
-                '\rEpoch {} Iter {} Loss {:.4f}'.format(
-                    epoch, iter_count, _loss),
-                end='')
-            iter_count += 1
+            if iter_count == 0:
+                logging.info(
+                    'Epoch {} : Loss of last 20 iterations {:.4f}'.format(
+                        epoch, iter_loss))
+                iter_loss = 0.0
 
         t1 = time.time()
         # accuracy = evaluate_accuracy(net, val_loader)
-        print('\rEpoch {} : Loss {:.4f}  Time {:.2f}min'.format(
+        logging.info('Epoch {} : Loss {:.4f}  Time {:.2f}min'.format(
             epoch, running_loss, (t1 - t0) / 60))
         records['losses'].append(running_loss)
         # records['accuracies'].append(accuracy)
 
         if (epoch + 1) % checkpoint == 0:
-            print('\rSaving checkpoint', end='')
+            logging.info('\rSaving checkpoint', end='')
             torch.save(net.state_dict(), os.path.join(save_root, 'weights'))
             torch.save(optimizer.state_dict(),
                        os.path.join(save_root, 'optimizer'))
@@ -168,9 +185,9 @@ def train(name, train_loader, val_loader, load_checkpoint, learning_rate,
                 call(
                     ['cp', '-r', save_root,
                      os.path.join(cfg.home, 'Dropbox')])
-            print('\rFinish saving checkpoint', end='')
+            logging.info('\rFinish saving checkpoint', end='')
 
-    print('\nFinish training')
+    logging.info('\nFinish training')
 
 
 def main():
@@ -186,7 +203,7 @@ def main():
             shuffle=True,
             pin_memory=True)
         val_loader = DataLoader(
-            val_dataset, batch_size=16, shuffle=False, pin_memory=True)
+            val_dataset, batch_size=24, shuffle=False, pin_memory=True)
     else:
         train_loader = DataLoader(
             train_dataset,
@@ -194,7 +211,7 @@ def main():
             shuffle=True,
             pin_memory=False)
         val_loader = DataLoader(
-            val_dataset, batch_size=16, shuffle=False, pin_memory=False)
+            val_dataset, batch_size=24, shuffle=False, pin_memory=False)
     with open(args.name + '_hyperparameter', 'wb') as f:
         pickle.dump(args, f)
     train(args.name, train_loader, val_loader, True, args.lr, args.num_epoch,

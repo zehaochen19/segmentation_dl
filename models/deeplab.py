@@ -73,11 +73,11 @@ class DeepLab(nn.Module):
 
 def deeplab_test():
     x = Variable(torch.randn(1, 3, 512, 512))
-    net = DeepLab()
+    net = DeepLab(34)
     print(net)
     y = net(x)
 
-    print(y)
+    print(y.size())
 
 
 if __name__ == '__main__':
