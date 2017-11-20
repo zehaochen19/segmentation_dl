@@ -33,6 +33,15 @@ class Resize:
             (self.w, self.h), Image.NEAREST)
 
 
+class TestResize:
+    def __init__(self, w, h):
+        self.w = w
+        self.h = h
+
+    def __call(self, img, lbl):
+        return img.resize((self.w, self.h), Image.BILINEAR), lbl
+
+
 class ResizeShort:
     def __init__(self, size):
         self.size = size
@@ -125,7 +134,7 @@ cityscapes_train = Compose([
 ])
 
 cityscapes_val = Compose([
-    Resize(cfg.pre_resize_w, cfg.pre_resize_h),
+    TestResize(cfg.pre_resize_w, cfg.pre_resize_h),
     ToTensor(),
     Normalize(cfg.mean, cfg.std)
 ])

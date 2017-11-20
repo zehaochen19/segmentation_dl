@@ -2,11 +2,13 @@ import os
 import torch
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+import torch.nn.functional as F
 import cfg
 from dataset.cityscapes import CityScapes
 import augment
 
 from models.res_lkm import ResLKM
+from models.deeplab import DeepLab
 import numpy as np
 
 
@@ -20,6 +22,7 @@ def evaluate_accuracy(net, val_loader):
         img = Variable(img, volatile=True)
         pred = net(img).data
         pred = torch.max(pred, 1)[1]
+        pred = F.upsample_bilinear(pred, (2048, 1024))
         correct += torch.sum(pred == lbl)
         total += lbl.numel()
 
@@ -39,6 +42,7 @@ def evaluate_miou(net, loader):
         img = Variable(img, volatile=True)
         pred = net(img).data
         pred = torch.max(pred, 1)[1]
+        pred = F.upsample_bilinear(pred, (2048, 1024))
         for i in range(1, cfg.n_class):
             match = (lbl == i) + (pred == i)
             it = torch.sum(match == 2)
@@ -60,8 +64,8 @@ def evaluate_miou(net, loader):
 def main():
     dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
     loader = DataLoader(dataset, batch_size=20, shuffle=False)
-    net = ResLKM(cfg.n_class)
-    name = 'LKM_512_cityscapes'
+    net = DeepLab(cfg.n_class)
+    name = 'DeepLab_512_cityscapes'
 
     save_root = os.path.join('save', name)
     if torch.cuda.is_available():
@@ -82,7 +86,7 @@ def main():
 
 def draft():
     dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
-    loader = DataLoader(dataset, batch_size=20, shuffle=False)
+    loader = DataLoader(dataset, batch_size=20, shuffle=False, num_workers=4)
     lbl_set = set()
     for img, lbl in loader:
         lbl_set |= set(np.unique(lbl.numpy()))

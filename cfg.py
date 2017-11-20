@@ -7,6 +7,9 @@ crop = 1024
 pre_resize_w = 1280
 pre_resize_h = 640
 
+test_w = 1280
+test_h = 640
+
 size = 512
 
 mean = [0.485, 0.456, 0.406]

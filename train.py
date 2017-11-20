@@ -9,13 +9,14 @@ from torch.utils.data import DataLoader
 import augment
 import cfg
 from dataset.cityscapes import CityScapes
-from evaluation import evaluate_accuracy
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 from models.res_lkm import ResLKM
 from models.deeplab import DeepLab
+from models.duc_hdc import DucHdc
+from torch.optim.lr_scheduler import LambdaLR
 import argparse
 import logging
 import datetime
+import math
 
 
 def parse_arg():
@@ -27,7 +28,7 @@ def parse_arg():
         help='name of the network',
         dest='name',
         type=str,
-        default='DeepLab_512_cityscapes')
+        default='DucHdc512')
     # use dropbox
     parser.add_argument(
         '--dropbox',
@@ -36,7 +37,7 @@ def parse_arg():
         action='store_true')
     # learning rate
     parser.add_argument(
-        '--lr', help='learning rate', dest='lr', type=float, default=0.005)
+        '--lr', help='learning rate', dest='lr', type=float, default=0.0005)
     # weight decay
     parser.add_argument(
         '--weight_decay',
@@ -65,6 +66,13 @@ def parse_arg():
         dest='checkpoint',
         type=int,
         default=1)
+    parser.add_argument(
+        '--num_workers',
+        help='the number of workers for dataloader',
+        dest='num_workers',
+        type=int,
+        default=8,
+    )
 
     args = parser.parse_args()
     return args
@@ -72,7 +80,7 @@ def parse_arg():
 
 args = parse_arg()
 
-nets = {'LKM': ResLKM, 'DeepLab': DeepLab}
+nets = {'LKM': ResLKM, 'DeepLab': DeepLab, 'DucHdc': DucHdc}
 if not os.path.exists('log'):
     call(['mkdir', 'log'])
 logging.basicConfig(
@@ -86,8 +94,8 @@ logging.basicConfig(
     ])
 
 
-def train(name, train_loader, val_loader, load_checkpoint, learning_rate,
-          num_epochs, weight_decay, checkpoint, dropbox):
+def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
+          weight_decay, checkpoint, dropbox):
     net = nets[name.split('_')[0]](cfg.n_class)
     records = {'losses': []}
     if torch.cuda.is_available():
@@ -120,26 +128,32 @@ def train(name, train_loader, val_loader, load_checkpoint, learning_rate,
 
     last_epoch = len(records['losses']) - 1
 
-    scheduler = ReduceLROnPlateau(
+    # scheduler = ReduceLROnPlateau(
+    #     optimizer,
+    #     mode='max',
+    #     factor=0.5,
+    #     patience=5,
+    #     verbose=True,
+    #     threshold=1e-3,
+    #     threshold_mode='abs',
+    #     min_lr=1e-7)
+
+    scheduler = LambdaLR(
         optimizer,
-        mode='max',
-        factor=0.5,
-        patience=5,
-        verbose=True,
-        threshold=1e-3,
-        threshold_mode='abs',
-        min_lr=1e-7)
+        lr_lambda=lambda e: math.pow(1 - e / num_epochs, 0.9),
+        last_epoch=last_epoch)
 
     iter_loss = 0.0
     iter_count = 0
     for epoch in range(last_epoch + 1, num_epochs):
         t0 = time.time()
-        net.eval()
-        acc = evaluate_accuracy(net, val_loader)
-        net.train()
-        logging.info('Before epoch {} : Accuracy {}'.format(epoch, acc))
-        scheduler.step(acc)
+        # net.eval()
+        # acc = evaluate_accuracy(net, val_loader)
+        # net.train()
+        # logging.info('Before epoch {} : Accuracy {}'.format(epoch, acc))
+        # scheduler.step(acc)
 
+        scheduler.step()
         running_loss = 0.0
 
         for img, lbl in train_loader:
@@ -175,7 +189,7 @@ def train(name, train_loader, val_loader, load_checkpoint, learning_rate,
         # records['accuracies'].append(accuracy)
 
         if (epoch + 1) % checkpoint == 0:
-            logging.info('\rSaving checkpoint', end='')
+            logging.info('Saving checkpoint')
             torch.save(net.state_dict(), os.path.join(save_root, 'weights'))
             torch.save(optimizer.state_dict(),
                        os.path.join(save_root, 'optimizer'))
@@ -185,37 +199,47 @@ def train(name, train_loader, val_loader, load_checkpoint, learning_rate,
                 call(
                     ['cp', '-r', save_root,
                      os.path.join(cfg.home, 'Dropbox')])
-            logging.info('\rFinish saving checkpoint', end='')
+            logging.info('Finish saving checkpoint')
 
-    logging.info('\nFinish training')
+    logging.info('Finish training')
 
 
 def main():
     train_dataset = CityScapes(cfg.cityscapes_root, 'train',
                                augment.cityscapes_train)
-    val_dataset = CityScapes(cfg.cityscapes_root, 'val',
-                             augment.cityscapes_val)
+    # val_dataset = CityScapes(cfg.cityscapes_root, 'val',
+    #                          augment.cityscapes_val)
 
     if torch.cuda.is_available():
         train_loader = DataLoader(
             train_dataset,
             batch_size=args.batch_size,
             shuffle=True,
-            pin_memory=True)
-        val_loader = DataLoader(
-            val_dataset, batch_size=24, shuffle=False, pin_memory=True)
+            pin_memory=True,
+            num_workers=8)
+        # val_loader = DataLoader(
+        #     val_dataset,
+        #     batch_size=16,
+        #     shuffle=False,
+        #     pin_memory=True,
+        #     num_workers=8)
     else:
         train_loader = DataLoader(
             train_dataset,
             batch_size=args.batch_size,
             shuffle=True,
-            pin_memory=False)
-        val_loader = DataLoader(
-            val_dataset, batch_size=24, shuffle=False, pin_memory=False)
+            pin_memory=False,
+            num_workers=8)
+        # val_loader = DataLoader(
+        #     val_dataset,
+        #     batch_size=16,
+        #     shuffle=False,
+        #     pin_memory=False,
+        #     num_workers=4)
     with open(args.name + '_hyperparameter', 'wb') as f:
         pickle.dump(args, f)
-    train(args.name, train_loader, val_loader, True, args.lr, args.num_epoch,
-          args.wd, args.checkpoint, args.dropbox)
+    train(args.name, train_loader, True, args.lr, args.num_epoch, args.wd,
+          args.checkpoint, args.dropbox)
 
 
 if __name__ == '__main__':
