@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 import torch.nn.functional as F
-from resnext.resnext import resnext101_64x4d
+from torchvision import models
 
 
 class AtrousSpatialPyramidPooling(nn.Module):
@@ -20,7 +20,7 @@ class AtrousSpatialPyramidPooling(nn.Module):
                         dilation=r), nn.BatchNorm2d(out_channels)))
 
     def forward(self, x):
-        result = [x]
+        result = []
         for p in self.pools:
             result.append(p(x))
         result = torch.cat(result, 1)
@@ -35,32 +35,43 @@ class DucHdc(nn.Module):
     def __init__(self, n_class):
         super(DucHdc, self).__init__()
         self.n_class = n_class
-        self.resnext = resnext101_64x4d().features
+        resnet = models.resnet101(pretrained=True)
+        self.layer0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu,
+                                    resnet.maxpool)
+        self.layer1 = resnet.layer1
+        self.layer2 = resnet.layer2
+        self.layer3 = resnet.layer3
+        self.layer4 = resnet.layer4
 
-        for i in range(len(self.resnext[6])):
-            self.resnext[6][i][0][0][0][3].stride = (1, 1)
-            self.resnext[6][i][0][0][0][3].dilation = (
-                self.layer3_rates[i % 4], self.layer3_rates[i % 4])
-            self.resnext[6][i][0][0][0][3].padding = (self.layer3_rates[i % 4],
-                                                      self.layer3_rates[i % 4])
-        for i in range(len(self.resnext[7])):
-            self.resnext[7][i][0][0][0][3].stride = (1, 1)
-            self.resnext[7][i][0][0][0][3].dilation = (
-                self.layer4_rates[i % 3], self.layer4_rates[i % 3])
-            self.resnext[7][i][0][0][0][3].padding = (self.layer4_rates[i % 3],
-                                                      self.layer4_rates[i % 3])
-        self.resnext[6][0][0][1][0].stride = (1, 1)
-        self.resnext[7][0][0][1][0].stride = (1, 1)
+        self.layer3[0].downsample[0].stride = (1, 1)
+        for i in range(3):
+            self.layer3[i].conv2.dilation = (self.layer3_rates[i % 4],
+                                             self.layer3_rates[i % 4])
+            self.layer3[i].conv2.padding = (self.layer3_rates[i % 4],
+                                            self.layer3_rates[i % 4])
+            self.layer3[i].conv2.stride = (1, 1)
 
-        self.aspp = AtrousSpatialPyramidPooling(2048, 512, [6, 12, 18, 24])
+        self.layer4[0].downsample[0].stride = (1, 1)
+        for i in range(3):
+            self.layer4[i].conv2.dilation = (self.layer4_rates[i % 3],
+                                             self.layer4_rates[i % 3])
+            self.layer4[i].conv2.padding = (self.layer4_rates[i % 3],
+                                            self.layer4_rates[i % 3])
+            self.layer4[i].conv2.stride = (1, 1)
+
+        self.aspp = AtrousSpatialPyramidPooling(2048, 512, [1, 6, 12, 18, 24])
 
         out_channels = 8 * 8 * n_class
         self.duc = nn.Sequential(
-            nn.Conv2d(4096, out_channels, kernel_size=3, padding=1),
+            nn.Conv2d(2560, out_channels, kernel_size=3, padding=1),
             nn.PixelShuffle(8))
 
     def forward(self, x):
-        x = self.resnext(x)
+        x = self.layer0(x)
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
 
         x = self.aspp(x)
 

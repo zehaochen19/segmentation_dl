@@ -28,7 +28,7 @@ def parse_arg():
         help='name of the network',
         dest='name',
         type=str,
-        default='DucHdc512')
+        default='LKM_cityscapes512')
     # use dropbox
     parser.add_argument(
         '--dropbox',
@@ -37,7 +37,7 @@ def parse_arg():
         action='store_true')
     # learning rate
     parser.add_argument(
-        '--lr', help='learning rate', dest='lr', type=float, default=0.0005)
+        '--lr', help='learning rate', dest='lr', type=float, default=0.002)
     # weight decay
     parser.add_argument(
         '--weight_decay',
@@ -51,7 +51,7 @@ def parse_arg():
         help='batch size',
         dest='batch_size',
         type=int,
-        default=8)
+        default=6)
     # num epoch
     parser.add_argument(
         '--num_epoch',
@@ -71,7 +71,7 @@ def parse_arg():
         help='the number of workers for dataloader',
         dest='num_workers',
         type=int,
-        default=8,
+        default=4,
     )
 
     args = parser.parse_args()
@@ -111,7 +111,8 @@ def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
     save_root = os.path.join('save', name)
     if not os.path.exists(save_root):
         call(['mkdir', '-p', save_root])
-
+    with open(os.path.join(save_root, 'hyperparameter'), 'wb') as f:
+        pickle.dump(args, f)
     if load_checkpoint:
         save_files = set(os.listdir(save_root))
         if {'weights', 'optimizer', 'records'} <= save_files:
@@ -145,6 +146,7 @@ def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
 
     iter_loss = 0.0
     iter_count = 0
+    print('Start training {}'.format(name))
     for epoch in range(last_epoch + 1, num_epochs):
         t0 = time.time()
         # net.eval()
@@ -209,14 +211,13 @@ def main():
                                augment.cityscapes_train)
     # val_dataset = CityScapes(cfg.cityscapes_root, 'val',
     #                          augment.cityscapes_val)
-
     if torch.cuda.is_available():
         train_loader = DataLoader(
             train_dataset,
             batch_size=args.batch_size,
             shuffle=True,
             pin_memory=True,
-            num_workers=8)
+            num_workers=args.num_workers)
         # val_loader = DataLoader(
         #     val_dataset,
         #     batch_size=16,
@@ -229,15 +230,14 @@ def main():
             batch_size=args.batch_size,
             shuffle=True,
             pin_memory=False,
-            num_workers=8)
+            num_workers=args.num_workers)
         # val_loader = DataLoader(
         #     val_dataset,
         #     batch_size=16,
         #     shuffle=False,
         #     pin_memory=False,
         #     num_workers=4)
-    with open(args.name + '_hyperparameter', 'wb') as f:
-        pickle.dump(args, f)
+
     train(args.name, train_loader, True, args.lr, args.num_epoch, args.wd,
           args.checkpoint, args.dropbox)
 

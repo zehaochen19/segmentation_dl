@@ -10,16 +10,28 @@ class GlobalConvolutionalNetwork(nn.Module):
         super(GlobalConvolutionalNetwork, self).__init__()
         pad = k // 2
         self.left = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels,
-                      kernel_size=(k, 1), padding=(pad, 0)),
-            nn.Conv2d(out_channels, out_channels,
-                      kernel_size=(1, k), padding=(0, pad)),
+            nn.Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size=(k, 1),
+                padding=(pad, 0)),
+            nn.Conv2d(
+                out_channels,
+                out_channels,
+                kernel_size=(1, k),
+                padding=(0, pad)),
         )
         self.right = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels,
-                      kernel_size=(1, k), padding=(0, pad)),
-            nn.Conv2d(out_channels, out_channels,
-                      kernel_size=(k, 1), padding=(pad, 0)),
+            nn.Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size=(1, k),
+                padding=(0, pad)),
+            nn.Conv2d(
+                out_channels,
+                out_channels,
+                kernel_size=(k, 1),
+                padding=(pad, 0)),
         )
 
     def forward(self, x):
@@ -33,8 +45,7 @@ class BoundaryRefineModule(nn.Module):
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(in_channels),
             nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1)
-        )
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1))
 
     def forward(self, x):
         return x + self.layer(x)
@@ -44,8 +55,8 @@ class ResLKM(nn.Module):
     def __init__(self, n_class):
         super(ResLKM, self).__init__()
         resnet = models.resnet101(pretrained=True)
-        self.layer0 = nn.Sequential(
-            resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool)
+        self.layer0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu,
+                                    resnet.maxpool)
         self.layer1 = resnet.layer1
         self.layer2 = resnet.layer2
         self.layer3 = resnet.layer3

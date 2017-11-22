@@ -3,9 +3,11 @@ from os.path import expanduser
 import collections
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
 from .resnext_features import resnext101_32x4d_features
 from .resnext_features import resnext101_64x4d_features
+"""
+copy from https://github.com/Cadene/pretrained-models.pytorch
+"""
 
 __all__ = [
     'ResNeXt101_32x4d', 'resnext101_32x4d', 'ResNeXt101_64x4d',
@@ -16,7 +18,8 @@ pretrained_settings = {
     'resnext101_32x4d': {
         'imagenet': {
             'url':
-            'http://webia.lip6.fr/~cadene/Downloads/pretrained-models.pytorch/resnext101_32x4d.pth',
+            'http://webia.lip6.fr/~cadene/Downloads/\
+            pretrained-models.pytorch/resnext101_32x4d.pth',
             'input_space':
             'RGB',
             'input_size': [3, 224, 224],
@@ -30,7 +33,8 @@ pretrained_settings = {
     'resnext101_64x4d': {
         'imagenet': {
             'url':
-            'http://webia.lip6.fr/~cadene/Downloads/pretrained-models.pytorch/resnext101_64x4d.pth',
+            'http://webia.lip6.fr/~cadene/Downloads/\
+            pretrained-models.pytorch/resnext101_64x4d.pth',
             'input_space':
             'RGB',
             'input_size': [3, 224, 224],
@@ -79,7 +83,9 @@ def resnext101_32x4d(num_classes=1000, pretrained='imagenet'):
     if pretrained:
         settings = pretrained_settings['resnext101_32x4d'][pretrained]
         assert num_classes == settings['num_classes'], \
-            "num_classes should be {}, but is {}".format(settings['num_classes'], num_classes)
+            "num_classes should be {}, but is {}".format(
+                settings['num_classes'],
+                num_classes)
 
         dir_models = os.path.join(expanduser("~"), '.torch/resnext')
         path_pth = os.path.join(dir_models, 'resnext101_32x4d.pth')
@@ -108,7 +114,9 @@ def resnext101_64x4d(num_classes=1000, pretrained='imagenet'):
     if pretrained:
         settings = pretrained_settings['resnext101_64x4d'][pretrained]
         assert num_classes == settings['num_classes'], \
-            "num_classes should be {}, but is {}".format(settings['num_classes'], num_classes)
+            "num_classes should be {}, but is {}".format(
+                settings['num_classes'],
+                num_classes)
 
         dir_models = os.path.join(expanduser("~"), '.torch/resnext')
         path_pth = os.path.join(dir_models, 'resnext101_64x4d.pth')

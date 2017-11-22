@@ -133,7 +133,7 @@ cityscapes_train = Compose([
     Normalize(cfg.mean, cfg.std)
 ])
 
-cityscapes_val = Compose([
+cityscapes_test = Compose([
     TestResize(cfg.pre_resize_w, cfg.pre_resize_h),
     ToTensor(),
     Normalize(cfg.mean, cfg.std)

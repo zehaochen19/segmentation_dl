@@ -6,17 +6,51 @@ import torch.nn.functional as F
 import cfg
 from dataset.cityscapes import CityScapes
 import augment
-
 from models.res_lkm import ResLKM
 from models.deeplab import DeepLab
-import numpy as np
+import argparse
 
 
-def evaluate_accuracy(net, val_loader):
+def parse_arg():
+    parser = argparse.ArgumentParser(
+        description='Evaluate segmentation networks with Pytorch')
+    # network name
+    parser.add_argument(
+        '--name',
+        help='name of the network',
+        dest='name',
+        type=str,
+        default='DeepLab_cityscapes512')
+    # batch size
+    parser.add_argument(
+        '--batch_size',
+        help='batch size',
+        dest='batch_size',
+        type=int,
+        default=16)
+    # checkpoint
+    parser.add_argument(
+        '--num_workers',
+        help='the number of workers for dataloader',
+        dest='num_workers',
+        type=int,
+        default=4,
+    )
+
+    args = parser.parse_args()
+    return args
+
+
+args = parse_arg()
+
+nets = {'LKM': ResLKM, 'DeepLab': DeepLab}
+
+
+def evaluate_accuracy(net, loader):
     correct = 0
     total = 0
 
-    for img, lbl in val_loader:
+    for img, lbl in loader:
         if torch.cuda.is_available():
             img, lbl = img.cuda(), lbl.cuda()
         img = Variable(img, volatile=True)
@@ -55,17 +89,18 @@ def evaluate_miou(net, loader):
     for i in range(len(intersect)):
         if union[i] != 0:
             iou.append(intersect[i] / union[i])
-
+    print('Available number of categories: {}'.format(len(iou)))
     if was_training:
         net.train()
     return sum(iou) / len(iou)
 
 
 def main():
-    dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
-    loader = DataLoader(dataset, batch_size=20, shuffle=False)
-    net = DeepLab(cfg.n_class)
-    name = 'DeepLab_512_cityscapes'
+    dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_test)
+    loader = DataLoader(
+        dataset, batch_size=20, shuffle=False, num_workers=args.num_workers)
+    net = nets[args.name.split('_')[0]](cfg.n_class)
+    name = args.name
 
     save_root = os.path.join('save', name)
     if torch.cuda.is_available():
@@ -82,15 +117,6 @@ def main():
     print('mIOU : {:.6f}%'.format(miou * 100))
     accuracy = evaluate_accuracy(net, loader)
     print('Accuracy : {:.6f}%'.format(accuracy * 100))
-
-
-def draft():
-    dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_val)
-    loader = DataLoader(dataset, batch_size=20, shuffle=False, num_workers=4)
-    lbl_set = set()
-    for img, lbl in loader:
-        lbl_set |= set(np.unique(lbl.numpy()))
-        print(lbl_set)
 
 
 if __name__ == '__main__':
