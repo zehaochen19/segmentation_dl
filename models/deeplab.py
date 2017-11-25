@@ -57,8 +57,8 @@ class DeepLab(nn.Module):
 
         # self.resnext[7][0][0][1][0].stride = (1, 1)
 
-        self.aspp = AtrousSpatialPyramidPooling(2048, 512, [1, 4, 8, 12])
-        self.conv = nn.Conv2d(2048, 1024, kernel_size=1)
+        self.aspp = AtrousSpatialPyramidPooling(2048, 512, [1, 3, 6, 9, 12, 15])
+        self.conv = nn.Conv2d(3072, 1024, kernel_size=1)
         self.bn = nn.BatchNorm2d(1024)
         self.pred = nn.Conv2d(1024, n_class, kernel_size=1)
         self.upsample = nn.ConvTranspose2d(

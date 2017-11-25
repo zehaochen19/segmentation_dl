@@ -5,7 +5,7 @@ import os
 from PIL import Image
 
 import cfg
-import augment
+import transform
 import numpy as np
 
 from matplotlib import pyplot as plt
@@ -62,7 +62,7 @@ class ADEDataset(Dataset):
 
 
 def ade_test():
-    dataset = ADEDataset(cfg.ade_root, 'validation', augment.augmentation)
+    dataset = ADEDataset(cfg.ade_root, 'validation', transform.augmentation)
     dataloader = DataLoader(dataset, 4, True)
     for data in dataloader:
         print(data)

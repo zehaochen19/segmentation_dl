@@ -4,6 +4,7 @@ import random
 import numpy as np
 import torch
 import cfg
+from torchvision import transforms as T
 
 
 def resized_crop(img, lbl, i, j, h, w, size):
@@ -133,17 +134,14 @@ cityscapes_train = Compose([
     Normalize(cfg.mean, cfg.std)
 ])
 
-cityscapes_test = Compose([
-    TestResize(cfg.pre_resize_w, cfg.pre_resize_h),
+cityscapes_val = Compose([
+    Resize(cfg.pre_resize_w, cfg.pre_resize_h),
     ToTensor(),
     Normalize(cfg.mean, cfg.std)
 ])
 
-cityscapes_test = Compose(
-    [UnitResize(32), ToTensor(),
-     Normalize(cfg.mean, cfg.std)])
-
-cityscapes_t = Compose(
-    [Resize(cfg.size * 2, cfg.size),
-     ToTensor(),
-     Normalize(cfg.mean, cfg.std)])
+cityscapes_test = T.Compose([
+    T.Resize((cfg.pre_resize_h, cfg.pre_resize_w,)),
+    T.ToTensor(),
+    T.Normalize(cfg.mean, cfg.std)
+])

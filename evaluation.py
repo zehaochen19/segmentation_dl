@@ -2,10 +2,9 @@ import os
 import torch
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-import torch.nn.functional as F
 import cfg
 from dataset.cityscapes import CityScapes
-import augment
+import transform
 from models.res_lkm import ResLKM
 from models.deeplab import DeepLab
 import argparse
@@ -20,14 +19,14 @@ def parse_arg():
         help='name of the network',
         dest='name',
         type=str,
-        default='DeepLab_cityscapes512')
+        default='LKM_cityscapes512')
     # batch size
     parser.add_argument(
         '--batch_size',
         help='batch size',
         dest='batch_size',
         type=int,
-        default=16)
+        default=8)
     # checkpoint
     parser.add_argument(
         '--num_workers',
@@ -55,8 +54,8 @@ def evaluate_accuracy(net, loader):
             img, lbl = img.cuda(), lbl.cuda()
         img = Variable(img, volatile=True)
         pred = net(img).data
+        # pred = F.upsample_bilinear(pred, (1024, 2048)).data
         pred = torch.max(pred, 1)[1]
-        pred = F.upsample_bilinear(pred, (2048, 1024))
         correct += torch.sum(pred == lbl)
         total += lbl.numel()
 
@@ -75,8 +74,8 @@ def evaluate_miou(net, loader):
             img, lbl = img.cuda(), lbl.cuda()
         img = Variable(img, volatile=True)
         pred = net(img).data
+        # pred = F.upsample_bilinear(pred, (1024, 2048)).data
         pred = torch.max(pred, 1)[1]
-        pred = F.upsample_bilinear(pred, (2048, 1024))
         for i in range(1, cfg.n_class):
             match = (lbl == i) + (pred == i)
             it = torch.sum(match == 2)
@@ -96,9 +95,12 @@ def evaluate_miou(net, loader):
 
 
 def main():
-    dataset = CityScapes(cfg.cityscapes_root, 'val', augment.cityscapes_test)
+    dataset = CityScapes(cfg.cityscapes_root, 'val', transform.cityscapes_val)
     loader = DataLoader(
-        dataset, batch_size=20, shuffle=False, num_workers=args.num_workers)
+        dataset,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers)
     net = nets[args.name.split('_')[0]](cfg.n_class)
     name = args.name
 
@@ -113,10 +115,10 @@ def main():
                 map_location=lambda storage, loc: storage))
 
     net.eval()
-    miou = evaluate_miou(net, loader)
-    print('mIOU : {:.6f}%'.format(miou * 100))
     accuracy = evaluate_accuracy(net, loader)
     print('Accuracy : {:.6f}%'.format(accuracy * 100))
+    miou = evaluate_miou(net, loader)
+    print('mIOU : {:.6f}%'.format(miou * 100))
 
 
 if __name__ == '__main__':

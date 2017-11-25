@@ -4,7 +4,7 @@ from torchvision import transforms
 import os
 from PIL import Image
 import cfg
-import augment
+import transform
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -23,7 +23,7 @@ def lbl_trans(label):
 
 
 class VOCDataset(Dataset):
-    def __init__(self, root, split, transform=augment.basic_trans):
+    def __init__(self, root, split, transform=transform.basic_trans):
         super(VOCDataset, self).__init__()
         self.root = root
         self.split = split
@@ -70,7 +70,7 @@ class VOCDataset(Dataset):
 
 def voc_test():
     dataset = VOCDataset(cfg.voc_root, (2012, 'trainval'),
-                         augment.augmentation)
+                         transform.augmentation)
     print(len(dataset))
     dataloader = DataLoader(dataset, 10, True)
 

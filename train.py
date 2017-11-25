@@ -6,7 +6,7 @@ import torch
 from torch import optim, nn
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-import augment
+import transform
 import cfg
 from dataset.cityscapes import CityScapes
 from models.res_lkm import ResLKM
@@ -28,7 +28,7 @@ def parse_arg():
         help='name of the network',
         dest='name',
         type=str,
-        default='LKM_cityscapes512')
+        default='DeepLab_cityscapes640-512')
     # use dropbox
     parser.add_argument(
         '--dropbox',
@@ -51,7 +51,7 @@ def parse_arg():
         help='batch size',
         dest='batch_size',
         type=int,
-        default=6)
+        default=4)
     # num epoch
     parser.add_argument(
         '--num_epoch',
@@ -149,12 +149,6 @@ def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
     print('Start training {}'.format(name))
     for epoch in range(last_epoch + 1, num_epochs):
         t0 = time.time()
-        # net.eval()
-        # acc = evaluate_accuracy(net, val_loader)
-        # net.train()
-        # logging.info('Before epoch {} : Accuracy {}'.format(epoch, acc))
-        # scheduler.step(acc)
-
         scheduler.step()
         running_loss = 0.0
 
@@ -163,7 +157,7 @@ def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
                 img, lbl = img.cuda(), lbl.cuda()
             img, lbl = Variable(
                 img, requires_grad=False), Variable(
-                    lbl, requires_grad=False)
+                lbl, requires_grad=False)
 
             pred = net(img)
             optimizer.zero_grad()
@@ -208,7 +202,7 @@ def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
 
 def main():
     train_dataset = CityScapes(cfg.cityscapes_root, 'train',
-                               augment.cityscapes_train)
+                               transform.cityscapes_train)
     # val_dataset = CityScapes(cfg.cityscapes_root, 'val',
     #                          augment.cityscapes_val)
     if torch.cuda.is_available():
