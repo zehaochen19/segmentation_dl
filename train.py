@@ -12,6 +12,7 @@ from dataset.cityscapes import CityScapes
 from models.res_lkm import ResLKM
 from models.deeplab import DeepLab
 from models.duc_hdc import DucHdc
+
 from torch.optim.lr_scheduler import LambdaLR
 import argparse
 import logging
@@ -37,7 +38,7 @@ def parse_arg():
         action='store_true')
     # learning rate
     parser.add_argument(
-        '--lr', help='learning rate', dest='lr', type=float, default=0.002)
+        '--lr', help='learning rate', dest='lr', type=float, default=0.005)
     # weight decay
     parser.add_argument(
         '--weight_decay',
@@ -51,7 +52,7 @@ def parse_arg():
         help='batch size',
         dest='batch_size',
         type=int,
-        default=4)
+        default=6)
     # num epoch
     parser.add_argument(
         '--num_epoch',
@@ -107,7 +108,8 @@ def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
         net.parameters(),
         lr=learning_rate,
         weight_decay=weight_decay,
-        momentum=0.9)
+        momentum=0.9,
+        nesterov=True)
     save_root = os.path.join('save', name)
     if not os.path.exists(save_root):
         call(['mkdir', '-p', save_root])
@@ -157,7 +159,7 @@ def train(name, train_loader, load_checkpoint, learning_rate, num_epochs,
                 img, lbl = img.cuda(), lbl.cuda()
             img, lbl = Variable(
                 img, requires_grad=False), Variable(
-                lbl, requires_grad=False)
+                    lbl, requires_grad=False)
 
             pred = net(img)
             optimizer.zero_grad()

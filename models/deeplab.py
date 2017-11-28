@@ -29,8 +29,6 @@ class AtrousSpatialPyramidPooling(nn.Module):
 
 
 class DeepLab(nn.Module):
-    rates = [1, 2, 4]
-
     def __init__(self, n_class):
         super(DeepLab, self).__init__()
         resnet = models.resnet101(pretrained=True)
@@ -43,23 +41,15 @@ class DeepLab(nn.Module):
 
         self.layer4[0].downsample[0].stride = (1, 1)
         for i in range(3):
-            self.layer4[i].conv2.dilation = (self.rates[i], self.rates[i])
-            self.layer4[i].conv2.padding = (self.rates[i], self.rates[i])
+            self.layer4[i].conv2.dilation = (2, 2)
+            self.layer4[i].conv2.padding = (2, 2)
             self.layer4[i].conv2.stride = (1, 1)
-        # self.resnext = resnext101_32x4d().features
-        # self.resnext = resnext101_32x4d().features
-        # for i in range(len(self.resnext[7])):
-        #     self.resnext[7][i][0][0][0][3].stride = (1, 1)
-        #     self.resnext[7][i][0][0][0][3].dilation = (self.rates[i % 3],
-        #                                                self.rates[i % 3])
-        #     self.resnext[7][i][0][0][0][3].padding = (self.rates[i % 3],
-        #                                               self.rates[i % 3])
 
-        # self.resnext[7][0][0][1][0].stride = (1, 1)
-
-        self.aspp = AtrousSpatialPyramidPooling(2048, 512, [1, 3, 6, 9, 12, 15])
-        self.conv = nn.Conv2d(3072, 1024, kernel_size=1)
-        self.bn = nn.BatchNorm2d(1024)
+        self.conv1 = nn.Conv2d(2048, 1024, 1)
+        self.bn1 = nn.BatchNorm2d(1024)
+        self.aspp = AtrousSpatialPyramidPooling(2048, 512, [3, 6, 9, 12, 15])
+        self.conv2 = nn.Conv2d(2560, 1024, kernel_size=1)
+        self.bn2 = nn.BatchNorm2d(1024)
         self.pred = nn.Conv2d(1024, n_class, kernel_size=1)
         self.upsample = nn.ConvTranspose2d(
             n_class, n_class, kernel_size=32, stride=16, padding=8)
@@ -71,10 +61,10 @@ class DeepLab(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
 
-        # x = self.resnext(x)
-        x = self.aspp(x)
-        x = self.conv(x)
-        x = F.relu(self.bn(x))
+        x1 = F.relu(self.bn1(self.conv1(x)))
+        x2 = self.aspp(x)
+        x2 = self.bn2(self.conv2(x2))
+        x = x1 + x2
         x = self.pred(x)
 
         return self.upsample(x)
