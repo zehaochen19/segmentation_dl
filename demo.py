@@ -8,8 +8,6 @@ from matplotlib import pyplot as plt
 from torch.autograd import Variable
 from torchvision import transforms
 from torch.utils.data import DataLoader
-from dataset.cityscapes import CityScapes
-import transform
 from models.deeplab import DeepLab
 from models.res_lkm import ResLKM
 import cfg
@@ -45,26 +43,13 @@ def demo_main(img_root):
             pred.numpy().astype(np.uint8), mode='L').resize((w, h))
 
         fig = plt.figure()
-        fig.add_subplot(2, 1, 1)
+        fig.add_subplot(1, 2, 1)
         plt.imshow(img)
-        fig.add_subplot(2, 1, 2)
+        fig.add_subplot(1, 2, 2)
         plt.imshow(pred)
         plt.show()
 
 
-def demo_cityscapes(net):
-    val_dataset = CityScapes(cfg.cityscapes_root, 'val',
-                             transform.cityscapes_test)
-    val_loader = DataLoader(
-        val_dataset, batch_size=1, shuffle=True, pin_memory=False)
-    for img, lbl in val_loader:
-        if torch.cuda.is_available():
-            img, lbl = img.cuda(), lbl.cuda()
-        img, lbl = Variable(img, volatile=True), Variable(lbl, volatile=True)
-        pred = net(img).data.squeeze().max(0)[1]
-
-
 if __name__ == '__main__':
-    img_root = os.path.join(cfg.voc_root, 'VOC2012', 'JPEGImages')
-    city_root = os.path.join(cfg.cityscapes_root, 'leftImg8bit/test/berlin')
+    city_root = os.path.join(cfg.cityscapes_root, 'leftImg8bit/val/frankfurt')
     demo_main(city_root)

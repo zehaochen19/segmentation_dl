@@ -19,7 +19,7 @@ def parse_arg():
         help='name of the network',
         dest='name',
         type=str,
-        default='LKM_cityscapes512')
+        default='DeepLab_cityscapes640-512')
     # batch size
     parser.add_argument(
         '--batch_size',

@@ -141,7 +141,7 @@ cityscapes_val = Compose([
 ])
 
 cityscapes_test = T.Compose([
-    T.Resize((cfg.pre_resize_h, cfg.pre_resize_w,)),
+    T.Resize((cfg.pre_resize_h, cfg.pre_resize_w)),
     T.ToTensor(),
     T.Normalize(cfg.mean, cfg.std)
 ])

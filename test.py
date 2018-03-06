@@ -22,7 +22,7 @@ def parse_arg():
         help='name of the network',
         dest='name',
         type=str,
-        default='LKM_cityscapes512')
+        default='DeepLab_cityscapes640-512')
     # batch size
     parser.add_argument(
         '--batch_size',
@@ -51,14 +51,14 @@ def test_main():
     if not os.path.exists('test'):
         call(['mkdir', 'test'])
 
-    dataset = CityScapesTest(cfg.cityscapes_root, 'test', transform.cityscapes_test)
+    dataset = CityScapesTest(cfg.cityscapes_root, 'test',
+                             transform.cityscapes_test)
     loader = DataLoader(
         dataset,
         batch_size=args.batch_size,
         shuffle=False,
         num_workers=args.num_workers,
-        collate_fn=test_collate
-    )
+        collate_fn=test_collate)
     net = nets[args.name.split('_')[0]](cfg.n_class)
     name = args.name
     save_root = os.path.join('save', name)

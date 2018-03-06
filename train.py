@@ -12,7 +12,6 @@ from dataset.cityscapes import CityScapes
 from models.res_lkm import ResLKM
 from models.deeplab import DeepLab
 from models.duc_hdc import DucHdc
-
 from torch.optim.lr_scheduler import LambdaLR
 import argparse
 import logging
@@ -38,7 +37,7 @@ def parse_arg():
         action='store_true')
     # learning rate
     parser.add_argument(
-        '--lr', help='learning rate', dest='lr', type=float, default=0.005)
+        '--lr', help='learning rate', dest='lr', type=float, default=0.0025)
     # weight decay
     parser.add_argument(
         '--weight_decay',
@@ -59,7 +58,7 @@ def parse_arg():
         help='number of epoch',
         dest='num_epoch',
         type=int,
-        default=100)
+        default=120)
     # checkpoint
     parser.add_argument(
         '--checkpoint',
